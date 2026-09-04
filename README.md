@@ -22,13 +22,21 @@ campusos-hackathon/
 ├── README.md                    ← You are here
 ├── PROBLEM_STATEMENT.md         ← Full problem statement + scoring
 ├── SUBMISSION.md                ← How and where to submit
+├── docs/
+│   └── API_CONTRACT.md          ← Versioned frontend/backend/agent contract
 │
 ├── data/                        ← Seed data (load these into your backend)
 │   ├── schedules.json
 │   ├── rooms.json
 │   ├── events.json
 │   ├── announcements.json
-│   └── assignments.json
+│   ├── assignments.json
+│   └── users.json               ← MVP demo identity and enrollments
+│
+├── backend/
+│   ├── app/schemas/             ← Executable Pydantic v2 API contracts
+│   ├── app/services/            ← Shared deterministic business rules
+│   └── tests/                   ← Contract and relevance tests
 │
 ├── schema/
 │   └── schema.md                ← Field names, types, and constraints for all 5 systems
@@ -79,6 +87,8 @@ Submit your fork's public URL via the instructions in [`SUBMISSION.md`](./SUBMIS
 | Resource | Link |
 |----------|------|
 | Full problem statement | [`PROBLEM_STATEMENT.md`](./PROBLEM_STATEMENT.md) |
+| Development roadmap | [`docs/DEVELOPMENT_ROADMAP.md`](./docs/DEVELOPMENT_ROADMAP.md) |
+| API contract | [`docs/API_CONTRACT.md`](./docs/API_CONTRACT.md) |
 | Data schema | [`schema/schema.md`](./schema/schema.md) |
 | Sample agent queries | [`sample_queries/sample_queries.md`](./sample_queries/sample_queries.md) |
 | Submission guide | [`SUBMISSION.md`](./SUBMISSION.md) |
@@ -94,6 +104,7 @@ Submit your fork's public URL via the instructions in [`SUBMISSION.md`](./SUBMIS
 | `events.json` | 7 | Campus events with registration lists |
 | `announcements.json` | 8 | Notices with priority levels and expiry dates |
 | `assignments.json` | 8 | Course assignments with deadlines and submission status |
+| `users.json` | 1 | MVP demo user and course-section enrollments |
 
 > **Important:** These JSON files are only the starting/seed data — not the database itself. Load them into a real backend (a database, or at minimum a backend service with persistent storage) on app startup. Your dashboard and AI agent must both read from and write to that backend, not the static JSON files directly. If you add, edit, or delete a record, the change must be saved in your backend and still be there after a reload — the JSON files in this repo will not update. The agent is also expected to always query the current backend state, not a cached or hardcoded copy of the seed data.
 

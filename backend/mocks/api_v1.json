@@ -1,0 +1,40 @@
+{
+  "user": {
+    "id": "usr-001", "student_id": "20-40532", "name": "Sakibul Hassan",
+    "department": "CSE", "role": "student",
+    "enrollments": [{"course": "CSE 4113", "section": "B"}]
+  },
+  "schedule": {
+    "id": "sch-mock", "course": "CSE 4113", "title": "Pattern Recognition",
+    "day": "Sunday", "start_time": "13:00", "end_time": "13:50",
+    "room": "7A07", "instructor": "Demo Instructor", "section": "B"
+  },
+  "room": {
+    "id": "room-mock", "room_number": "7A01", "type": "classroom",
+    "capacity": 40, "equipment": ["projector"], "floor": 7,
+    "status": "available", "bookings": []
+  },
+  "event": {
+    "id": "evt-mock", "name": "Demo Event", "description": "Mock event fixture",
+    "date": "2026-09-10", "start_time": "09:00", "end_time": "11:00",
+    "end_date": "2026-09-10", "venue": "7C01", "organizer": "AUSTPIC",
+    "capacity": 60, "registered": 1, "registrations": [], "status": "upcoming"
+  },
+  "announcement": {
+    "id": "ann-mock", "title": "Demo notice", "body": "Mock announcement fixture",
+    "date": "2026-09-04", "priority": "low", "posted_by": "CSE Department",
+    "expires": "2026-09-10"
+  },
+  "assignment": {
+    "id": "asgn-mock", "course": "CSE 4113", "course_title": "Pattern Recognition",
+    "title": "Demo assignment", "description": "Mock assignment fixture",
+    "assigned_date": "2026-09-04", "deadline": "2026-09-10",
+    "submission_platform": "Google Classroom", "status": "pending", "marks": 10
+  },
+  "booking": {
+    "booking_id": "bk-mock", "booked_by": "Sakibul Hassan", "date": "2026-09-05",
+    "start_time": "15:00", "end_time": "17:00", "purpose": "Group study"
+  },
+  "registration": {"student_id": "20-40532", "name": "Sakibul Hassan"},
+  "error": {"error": {"code": "NOT_FOUND", "message": "Resource was not found", "details": null}}
+}
