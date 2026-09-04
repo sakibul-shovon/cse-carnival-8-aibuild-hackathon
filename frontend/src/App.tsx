@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AlertCircle, ArrowUpRight, CalendarDays, ClipboardList, Plus, Users } from 'lucide-react'
 import { Sidebar } from './components/layout/Sidebar'
@@ -29,9 +29,11 @@ function Dashboard() {
 function AppShell() {
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('campusos-theme') === 'dark')
   const title = titles[location.pathname] ?? 'Dashboard'
+  useEffect(() => { localStorage.setItem('campusos-theme', darkMode ? 'dark' : 'light') }, [darkMode])
 
-  return <div className="app-shell"><Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />{menuOpen && <button className="scrim" onClick={() => setMenuOpen(false)} aria-label="Close menu" />}<main className="main-content"><TopBar title={title} onMenu={() => setMenuOpen(true)} /><div className="content-wrap"><Routes><Route path="/dashboard" element={<Dashboard />} /><Route path="/schedule" element={<SchedulePage />} /><Route path="/rooms" element={<RoomsPage />} /><Route path="/events" element={<EventsPage />} /><Route path="/announcements" element={<AnnouncementsPage />} /><Route path="/assignments" element={<AssignmentsPage />} /><Route path="/ai-assistant" element={<AssistantPage />} /><Route path="/settings" element={<SettingsPage />} /><Route path="*" element={<Navigate to="/dashboard" replace />} /></Routes></div></main></div>
+  return <div className={`app-shell ${darkMode ? 'dark-theme' : ''}`}><Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />{menuOpen && <button className="scrim" onClick={() => setMenuOpen(false)} aria-label="Close menu" />}<main className="main-content"><TopBar title={title} onMenu={() => setMenuOpen(true)} darkMode={darkMode} onToggleTheme={() => setDarkMode((current) => !current)} /><div className="content-wrap"><Routes><Route path="/dashboard" element={<Dashboard />} /><Route path="/schedule" element={<SchedulePage />} /><Route path="/rooms" element={<RoomsPage />} /><Route path="/events" element={<EventsPage />} /><Route path="/announcements" element={<AnnouncementsPage />} /><Route path="/assignments" element={<AssignmentsPage />} /><Route path="/ai-assistant" element={<AssistantPage />} /><Route path="/settings" element={<SettingsPage />} /><Route path="*" element={<Navigate to="/dashboard" replace />} /></Routes></div></main></div>
 }
 
 export default function App() { return <BrowserRouter><AppShell /></BrowserRouter> }
