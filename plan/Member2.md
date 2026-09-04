@@ -178,11 +178,11 @@ PORT=4000
 
 ## Deliverables Checklist
 
-- [ ] Supabase tables created matching `schema.md` field names exactly
-- [ ] Seed script loads all 5 JSON files once, idempotently
-- [ ] Full CRUD on all 5 resources, no caching, immediately consistent
-- [ ] Room booking with real conflict detection
-- [ ] Room search filterable by capacity/equipment/availability
-- [ ] Event registration with capacity enforcement + status auto-update
-- [ ] Structured error responses across all endpoints
-- [ ] `/api/agent/chat` route scaffolded and handed off to Member 3
+- [x] Supabase tables created matching `schema.md` field names exactly
+- [x] Seed script loads all 5 JSON files once, idempotently
+- [x] Full CRUD on all 5 resources, no caching, immediately consistent
+- [x] Room booking with real conflict detection
+- [x] Room search filterable by capacity/equipment/availability
+- [x] Event registration with capacity enforcement + status auto-update
+- [x] Structured error responses across all endpoints
+- [x] `/api/agent/chat` route scaffolded and handed off to Member 3
