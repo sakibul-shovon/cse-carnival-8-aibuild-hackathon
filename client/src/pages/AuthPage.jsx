@@ -14,7 +14,6 @@ import {
   GraduationCap,
   Building,
   ShieldCheck,
-  Zap,
   ArrowLeft,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -69,7 +68,7 @@ export default function AuthPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { login, register, loginAsDemo, isAuthenticated, user } = useAuth();
+  const { login, register, isAuthenticated, user } = useAuth();
   const { addToast } = useToast();
 
   // Mode: 'login' or 'register' (synced with query param or path)
@@ -211,27 +210,6 @@ export default function AuthPage() {
     }
   };
 
-  const handleQuickDemo = async (role) => {
-    setIsLoading(true);
-    try {
-      const demoUser = await loginAsDemo(role);
-      addToast({
-        type: 'info',
-        title: `Logged in as ${role}`,
-        message: `Active session: ${demoUser.name} (${demoUser.student_id})`,
-      });
-      navigate('/schedules');
-    } catch (err) {
-      addToast({
-        type: 'error',
-        title: 'Demo Sign-In Failed',
-        message: err.message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="relative min-h-screen bg-[#ffffff] dark:bg-[#000000] text-slate-900 dark:text-slate-100 flex flex-col justify-between selection:bg-emerald-500 selection:text-white transition-colors duration-300">
       {/* Background Campus Image Watermark with Low Opacity & Emerald Radial Lighting */}
@@ -348,25 +326,9 @@ export default function AuthPage() {
 
               {/* Password */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-emerald-950 dark:text-slate-200">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginForm({ ...loginForm, password: 'password123' });
-                      addToast({
-                        type: 'info',
-                        title: 'Demo Password Filled',
-                        message: 'Filled "password123" for quick demo sign-in.',
-                      });
-                    }}
-                    className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
-                  >
-                    Use default password?
-                  </button>
-                </div>
+                <label className="block text-xs font-bold text-emerald-950 dark:text-slate-200 mb-1.5">
+                  Password
+                </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
@@ -621,41 +583,6 @@ export default function AuthPage() {
               </button>
             </form>
           )}
-
-          {/* Quick 1-Click Demo Login Bar */}
-          <div className="mt-6 pt-5 border-t border-emerald-900/10 dark:border-emerald-800/40">
-            <div className="flex items-center justify-between text-xs text-emerald-900/70 dark:text-slate-400 mb-2.5">
-              <span className="font-semibold uppercase tracking-wider text-[10px] flex items-center gap-1 text-emerald-800 dark:text-emerald-400">
-                <Zap className="w-3.5 h-3.5" />
-                Quick Demo Access:
-              </span>
-              <span className="text-[11px]">Instant Grading Login</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('Student')}
-                className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-900 dark:text-emerald-200 border border-emerald-500/25 transition text-left"
-              >
-                <div className="font-bold flex items-center gap-1.5">
-                  <span>👨‍🎓 Sakibul Hassan</span>
-                </div>
-                <div className="text-[10px] opacity-70">Student • CSE Dept</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('Faculty')}
-                className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-900 dark:text-emerald-200 border border-emerald-500/25 transition text-left"
-              >
-                <div className="font-bold flex items-center gap-1.5">
-                  <span>👨‍🏫 Prof. Mahbub</span>
-                </div>
-                <div className="text-[10px] opacity-70">Faculty • CSE Dept</div>
-              </button>
-            </div>
-          </div>
         </div>
       </main>
 
