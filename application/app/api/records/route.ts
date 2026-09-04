@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { makeId, readCampusData, removeRecord, saveRecord } from '@/lib/campus-db';
 import { FIELDS, SYSTEMS, type CampusRecord, type SystemName } from '@/lib/campus-types';
+import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,13 +19,17 @@ function cleanRecord(system: SystemName, input: Record<string, unknown>, id?: st
   return record;
 }
 
-export async function GET() {
-  try { return NextResponse.json(await readCampusData()); }
+export async function GET(request: Request) {
+  try {
+    if (!(await getCurrentUser(request))) return NextResponse.json({ error: 'Sign in is required.' }, { status: 401 });
+    return NextResponse.json(await readCampusData());
+  }
   catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to load campus data.' }, { status: 500 }); }
 }
 
 export async function POST(request: Request) {
   try {
+    if (!(await getCurrentUser(request))) return NextResponse.json({ error: 'Sign in is required.' }, { status: 401 });
     const body = await request.json() as { system?: unknown; record?: Record<string, unknown> };
     if (!isSystem(body.system) || !body.record) return NextResponse.json({ error: 'Invalid system or record.' }, { status: 400 });
     const record = cleanRecord(body.system, body.record); await saveRecord(body.system, record); return NextResponse.json(record, { status: 201 });
@@ -33,6 +38,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    if (!(await getCurrentUser(request))) return NextResponse.json({ error: 'Sign in is required.' }, { status: 401 });
     const body = await request.json() as { system?: unknown; record?: Record<string, unknown> };
     if (!isSystem(body.system) || !body.record || typeof body.record.id !== 'string') return NextResponse.json({ error: 'Invalid system or record.' }, { status: 400 });
     const record = cleanRecord(body.system, body.record, body.record.id); await saveRecord(body.system, record); return NextResponse.json(record);
@@ -40,6 +46,7 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (!(await getCurrentUser(request))) return NextResponse.json({ error: 'Sign in is required.' }, { status: 401 });
   const url = new URL(request.url); const system = url.searchParams.get('system'); const id = url.searchParams.get('id');
   if (!isSystem(system) || !id) return NextResponse.json({ error: 'Invalid system or id.' }, { status: 400 });
   await removeRecord(system, id); return NextResponse.json({ ok: true });

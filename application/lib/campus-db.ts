@@ -4,7 +4,37 @@ import { SYSTEMS, type CampusData, type CampusRecord, type SystemName } from './
 
 const nowIso = () => new Date().toISOString();
 
+// `drizzle/0000_campus_records.sql` is the canonical migration. OpenAI Sites
+// packages that file with each deployment, but an already-provisioned D1
+// database can predate the first deployment that contains it. Keep this
+// idempotent guard beside the data access layer so that database is repaired
+// on its first request instead of returning a missing-table error.
+const campusRecordsSchema = [
+  `CREATE TABLE IF NOT EXISTS campus_records (
+    id text PRIMARY KEY NOT NULL,
+    system text NOT NULL,
+    data text NOT NULL,
+    created_at text NOT NULL,
+    updated_at text NOT NULL
+  )`,
+  'CREATE INDEX IF NOT EXISTS idx_campus_records_system ON campus_records (system)',
+];
+
+let schemaReady: Promise<void> | undefined;
+
+export async function ensureCampusRecordsSchema() {
+  schemaReady ??= env.DB.batch(campusRecordsSchema.map((statement) => env.DB.prepare(statement))).then(() => undefined);
+  try {
+    await schemaReady;
+  } catch (error) {
+    // Do not retain a rejected promise: a transient D1 error should be retryable.
+    schemaReady = undefined;
+    throw error;
+  }
+}
+
 export async function ensureSeeded() {
+  await ensureCampusRecordsSchema();
   const count = await env.DB.prepare('SELECT COUNT(*) AS count FROM campus_records').first<{ count: number }>();
   if (Number(count?.count ?? 0) > 0) return;
   const timestamp = nowIso();

@@ -1,5 +1,5 @@
-import { CampusApp } from '@/components/campus-app';
+import { AuthGate } from '@/components/auth-gate';
 
 export default function Home() {
-  return <CampusApp />;
+  return <AuthGate />;
 }

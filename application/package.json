@@ -12,7 +12,7 @@
     "lint": "oxlint",
     "format": "oxfmt",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 execute site-creator-d1 --local --file drizzle/0000_campus_records.sql --persist-to .wrangler/state --config wrangler.local.jsonc"
+    "db:migrate:local": "wrangler d1 execute site-creator-d1 --local --file drizzle/0000_campus_records.sql --persist-to .wrangler/state --config wrangler.local.jsonc && wrangler d1 execute site-creator-d1 --local --file drizzle/0001_authentication.sql --persist-to .wrangler/state --config wrangler.local.jsonc"
   },
   "dependencies": {
     "react": "19.2.6",
