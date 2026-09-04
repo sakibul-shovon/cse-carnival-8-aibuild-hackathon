@@ -18,215 +18,160 @@ class AgentService
      */
     public function processQuery(string $message, array $history = [], string $role = 'student'): array
     {
-        $openaiKey = env('OPENAI_API_KEY');
         $geminiKey = env('GEMINI_API_KEY') ?: env('GOOGLE_API_KEY');
+        $openaiKey = env('OPENAI_API_KEY');
         $groqKey = env('GROQ_API_KEY');
 
-        if ($openaiKey && !str_starts_with($openaiKey, 'your_')) {
-            return $this->processWithOpenAI($message, $history, $openaiKey, $role);
-        }
-
-        if ($groqKey && !str_starts_with($groqKey, 'your_')) {
-            return $this->processWithGroq($message, $history, $groqKey, $role);
-        }
-
+        // 1. Primary: Real Google Gemini Function/Tool Calling Engine
         if ($geminiKey && !str_starts_with($geminiKey, 'your_')) {
             return $this->processWithGemini($message, $history, $geminiKey, $role);
         }
 
-        // Deterministic Fallback Tool Execution engine if no API key is provided
+        // 2. Secondary: OpenAI
+        if ($openaiKey && !str_starts_with($openaiKey, 'your_')) {
+            return $this->processWithOpenAI($message, $history, $openaiKey, $role);
+        }
+
+        // 3. Tertiary: Groq
+        if ($groqKey && !str_starts_with($groqKey, 'your_')) {
+            return $this->processWithGroq($message, $history, $groqKey, $role);
+        }
+
+        // 4. Deterministic Fallback Tool Execution engine if no API key is provided
         return $this->processWithLocalEngine($message, $role);
     }
 
     /**
-     * OpenAI Function / Tool Calling Implementation
-     */
-    private function processWithOpenAI(string $message, array $history, string $apiKey, string $role = 'student'): array
-    {
-        $tools = $this->getToolsDefinition();
-        $messages = [
-            [
-                'role' => 'system',
-                'content' => "You are CampusOS AI Agent — an intelligent university assistant for AUST (Ahsanullah University of Science and Technology). 
-Current Simulated Date: Friday, September 4, 2026.
-Current User Role: {$role}.
-You have tools to read, search, book rooms, register for events, and fetch live data from the database.
-Always query the live database using your tools.
-IMPORTANT PERMISSION RULES:
-- Students can search rooms, check availability, view equipment, and register for campus events.
-- Students CANNOT book rooms, reserve rooms, cancel room bookings, or mutate rooms. If a student asks to book/reserve a room, inform them politely that room booking requires university admin permissions.
-- Admins can book rooms, cancel room bookings, and mutate campus resources.
-For ambiguous or vague requests (e.g. 'book me any room tomorrow'), do NOT book immediately — ask clarification for exact time and room.
-Keep your answers helpful, clear, and accurate."
-            ]
-        ];
-
-        foreach ($history as $h) {
-            $messages[] = [
-                'role' => $h['role'] === 'assistant' ? 'assistant' : 'user',
-                'content' => $h['content'],
-            ];
-        }
-        $messages[] = ['role' => 'user', 'content' => $message];
-
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer $apiKey",
-                'Content-Type' => 'application/json',
-            ])->timeout(30)->post('https://api.openai.com/v1/chat/completions', [
-                'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
-                'messages' => $messages,
-                'tools' => $tools,
-                'tool_choice' => 'auto',
-            ]);
-
-            if (!$response->successful()) {
-                Log::error('OpenAI Error', ['body' => $response->body()]);
-                return $this->processWithLocalEngine($message, $role);
-            }
-
-            $resData = $response->json();
-            $choice = $resData['choices'][0]['message'] ?? null;
-            if (!$choice) {
-                return $this->processWithLocalEngine($message, $role);
-            }
-
-            $executedActions = [];
-            if (!empty($choice['tool_calls'])) {
-                $messages[] = $choice;
-                foreach ($choice['tool_calls'] as $toolCall) {
-                    $funcName = $toolCall['function']['name'];
-                    $args = json_decode($toolCall['function']['arguments'], true) ?? [];
-                    $toolResult = $this->executeTool($funcName, $args, $role);
-                    $executedActions[] = [
-                        'tool' => $funcName,
-                        'args' => $args,
-                        'result' => $toolResult,
-                    ];
-                    $messages[] = [
-                        'role' => 'tool',
-                        'tool_call_id' => $toolCall['id'],
-                        'content' => json_encode($toolResult),
-                    ];
-                }
-
-                // Second call to get final answer
-                $secondResponse = Http::withHeaders([
-                    'Authorization' => "Bearer $apiKey",
-                    'Content-Type' => 'application/json',
-                ])->timeout(30)->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
-                    'messages' => $messages,
-                ]);
-
-                if ($secondResponse->successful()) {
-                    $secondData = $secondResponse->json();
-                    $reply = $secondData['choices'][0]['message']['content'] ?? 'Done.';
-                    return [
-                        'response' => $reply,
-                        'actions' => $executedActions,
-                        'source' => 'openai_llm',
-                    ];
-                }
-            }
-
-            return [
-                'response' => $choice['content'] ?? 'I have processed your request.',
-                'actions' => $executedActions,
-                'source' => 'openai_llm',
-            ];
-        } catch (\Throwable $e) {
-            Log::error('OpenAI Exception: ' . $e->getMessage());
-            return $this->processWithLocalEngine($message, $role);
-        }
-    }
-
-    /**
-     * Groq Function Calling Implementation
-     */
-    private function processWithGroq(string $message, array $history, string $apiKey, string $role = 'student'): array
-    {
-        $tools = $this->getToolsDefinition();
-        $messages = [
-            [
-                'role' => 'system',
-                'content' => "You are CampusOS AI Agent for AUST. Current simulated date is 2026-09-04. Current role: {$role}. Always use tools to query database. For vague requests ask clarification."
-            ]
-        ];
-        foreach ($history as $h) {
-            $messages[] = ['role' => $h['role'] === 'assistant' ? 'assistant' : 'user', 'content' => $h['content']];
-        }
-        $messages[] = ['role' => 'user', 'content' => $message];
-
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer $apiKey",
-                'Content-Type' => 'application/json',
-            ])->timeout(30)->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model' => 'llama-3.3-70b-versatile',
-                'messages' => $messages,
-                'tools' => $tools,
-                'tool_choice' => 'auto',
-            ]);
-
-            if ($response->successful()) {
-                $resData = $response->json();
-                $choice = $resData['choices'][0]['message'] ?? null;
-                if ($choice && !empty($choice['tool_calls'])) {
-                    $executedActions = [];
-                    $messages[] = $choice;
-                    foreach ($choice['tool_calls'] as $toolCall) {
-                        $funcName = $toolCall['function']['name'];
-                        $args = json_decode($toolCall['function']['arguments'], true) ?? [];
-                        $toolResult = $this->executeTool($funcName, $args, $role);
-                        $executedActions[] = [
-                            'tool' => $funcName,
-                            'args' => $args,
-                            'result' => $toolResult,
-                        ];
-                        $messages[] = [
-                            'role' => 'tool',
-                            'tool_call_id' => $toolCall['id'],
-                            'content' => json_encode($toolResult),
-                        ];
-                    }
-
-                    $secondResponse = Http::withHeaders([
-                        'Authorization' => "Bearer $apiKey",
-                        'Content-Type' => 'application/json',
-                    ])->timeout(30)->post('https://api.groq.com/openai/v1/chat/completions', [
-                        'model' => 'llama-3.3-70b-versatile',
-                        'messages' => $messages,
-                    ]);
-
-                    if ($secondResponse->successful()) {
-                        $secondData = $secondResponse->json();
-                        return [
-                            'response' => $secondData['choices'][0]['message']['content'] ?? 'Done.',
-                            'actions' => $executedActions,
-                            'source' => 'groq_llm',
-                        ];
-                    }
-                } elseif ($choice) {
-                    return [
-                        'response' => $choice['content'],
-                        'actions' => [],
-                        'source' => 'groq_llm',
-                    ];
-                }
-            }
-        } catch (\Throwable $e) {
-            Log::error('Groq Error: ' . $e->getMessage());
-        }
-
-        return $this->processWithLocalEngine($message, $role);
-    }
-
-    /**
-     * Gemini Implementation
+     * Google Gemini Live Function/Tool Calling Implementation
      */
     private function processWithGemini(string $message, array $history, string $apiKey, string $role = 'student'): array
     {
+        $model = env('GEMINI_MODEL', 'gemini-2.5-flash');
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
+
+        $systemInstruction = "You are CampusOS AI Agent — the official intelligent operations assistant for Ahsanullah University of Science and Technology (AUST).
+Current Reference Date: Friday, September 4, 2026 (2026-09-04, Friday).
+Current Authenticated User Role: {$role}.
+
+CRITICAL SYSTEM RULES:
+1. The LIVE MySQL database is the absolute SINGLE SOURCE OF TRUTH. Never invent, hallucinate, or assume schedules, rooms, events, announcements, assignments, or booking statuses.
+2. ALWAYS call a tool whenever a user asks about campus data or requests an action. Never answer campus information from static memory or seed assumptions.
+3. Correctly resolve relative dates based on current reference date (2026-09-04):
+   - 'today' = 2026-09-04 (Friday)
+   - 'tomorrow' = 2026-09-05 (Saturday)
+   - 'next class' / 'next academic day' = Sunday (2026-09-06) since university academic week is Sunday to Thursday.
+   - 'this week' = 2026-09-04 through 2026-09-11.
+4. ROLE-BASED ACCESS CONTROL (RBAC):
+   - 'student' role: Can use read tools (get_schedule, get_room_availability, search_rooms, get_events, get_announcements, get_assignments, register_for_event).
+   - 'student' role: CANNOT book rooms, cancel room bookings, or mutate rooms. If a student requests room booking or room management, politely explain that room reservations and booking management require university administrator privileges.
+   - 'admin' role: Has full access to both read tools and mutation tools (book_room, cancel_room_booking).
+5. Tool Authorization & Confirmation:
+   - Authorization is enforced by the server. If a tool returns an error or permission denial, accurately relay the message.
+   - NEVER claim an action or booking succeeded unless the backend database tool explicitly returns success: true with confirmed details.
+6. Missing Information: If required parameters (e.g. room number, time slot) are missing for an action, ask a concise clarifying question instead of guessing.
+7. If a tool returns no results, state it plainly and clearly.
+8. Keep your replies concise, helpful, friendly, and properly formatted with markdown bullet points.";
+
+        $tools = $this->getGeminiToolsDefinition();
+
+        $contents = [];
+        foreach ($history as $h) {
+            $roleLabel = ($h['role'] === 'assistant' || $h['role'] === 'model') ? 'model' : 'user';
+            $contents[] = [
+                'role' => $roleLabel,
+                'parts' => [['text' => (string)($h['content'] ?? '')]]
+            ];
+        }
+        $contents[] = [
+            'role' => 'user',
+            'parts' => [['text' => $message]]
+        ];
+
+        $executedActions = [];
+        $maxTurns = 6;
+        $turn = 0;
+
+        try {
+            while ($turn < $maxTurns) {
+                $turn++;
+                $payload = [
+                    'system_instruction' => [
+                        'parts' => [['text' => $systemInstruction]]
+                    ],
+                    'contents' => $contents,
+                    'tools' => $tools,
+                ];
+
+                $response = Http::withHeaders([
+                    'Content-Type' => 'application/json',
+                ])->timeout(30)->post($url, $payload);
+
+                if (!$response->successful()) {
+                    Log::error('Gemini API Error', [
+                        'status' => $response->status(),
+                        'body' => $response->body()
+                    ]);
+                    break;
+                }
+
+                $resData = $response->json();
+                $candidate = $resData['candidates'][0] ?? null;
+                if (!$candidate || empty($candidate['content']['parts'])) {
+                    break;
+                }
+
+                $modelContent = $candidate['content'];
+                $contents[] = $modelContent;
+
+                $functionCalls = [];
+                $finalText = '';
+
+                foreach ($modelContent['parts'] as $part) {
+                    if (!empty($part['functionCall'])) {
+                        $functionCalls[] = $part['functionCall'];
+                    }
+                    if (!empty($part['text'])) {
+                        $finalText .= $part['text'];
+                    }
+                }
+
+                if (empty($functionCalls)) {
+                    return [
+                        'response' => $finalText ?: 'I have processed your request.',
+                        'actions' => $executedActions,
+                        'source' => 'gemini_agent',
+                    ];
+                }
+
+                $responseParts = [];
+                foreach ($functionCalls as $fc) {
+                    $toolName = $fc['name'];
+                    $args = $fc['args'] ?? [];
+                    $toolResult = $this->executeTool($toolName, $args, $role);
+
+                    $executedActions[] = [
+                        'tool' => $toolName,
+                        'args' => $args,
+                        'result' => $toolResult,
+                    ];
+
+                    $responseParts[] = [
+                        'functionResponse' => [
+                            'name' => $toolName,
+                            'response' => $toolResult,
+                        ]
+                    ];
+                }
+
+                $contents[] = [
+                    'role' => 'user',
+                    'parts' => $responseParts,
+                ];
+            }
+        } catch (\Throwable $e) {
+            Log::error('Gemini Agent Exception: ' . $e->getMessage());
+        }
+
         return $this->processWithLocalEngine($message, $role);
     }
 
@@ -607,7 +552,7 @@ Keep your answers helpful, clear, and accurate."
      */
     public function executeTool(string $toolName, array $args, string $role = 'student'): array
     {
-        // Admin-only tools check: room booking, room mutation, event mutations, announcement mutations, assignment mutations
+        // Admin-only tools check: room booking, room cancellation, room mutation, event mutations, announcement mutations, assignment mutations
         $adminTools = [
             'book_room',
             'cancel_room_booking',
@@ -622,123 +567,307 @@ Keep your answers helpful, clear, and accurate."
             'delete_assignment',
             'update_room_capacity'
         ];
+
         if (in_array($toolName, $adminTools) && $role !== 'admin') {
             return [
                 'success' => false,
-                'message' => "Permission denied: Action '{$toolName}' requires 'admin' role privileges. Students cannot book rooms or manage room allocations. Current role is '{$role}'."
+                'status_code' => 403,
+                'message' => "HTTP 403 Forbidden: Action '{$toolName}' requires 'admin' role privileges. Students cannot book rooms or manage room allocations. Current role is '{$role}'."
             ];
         }
 
         switch ($toolName) {
+            // Tool 1: Class Schedules
+            case 'get_schedule':
             case 'get_schedules':
                 $q = Schedule::query();
-                if (!empty($args['day'])) $q->where('day', $args['day']);
-                if (!empty($args['course'])) $q->where('course', 'like', "%{$args['course']}%");
-                return ['success' => true, 'data' => $q->get()->toArray()];
-
-            case 'get_rooms':
-            case 'search_rooms':
-                $q = Room::query();
-                if (!empty($args['type'])) $q->where('type', $args['type']);
-                if (!empty($args['min_capacity'])) $q->where('capacity', '>=', (int)$args['min_capacity']);
-                if (!empty($args['equipment'])) {
-                    foreach ((array)$args['equipment'] as $eq) {
-                        $q->whereJsonContains('equipment', $eq);
-                    }
+                if (!empty($args['day'])) {
+                    $q->where('day', $args['day']);
                 }
-                return ['success' => true, 'data' => $q->get()->toArray()];
+                if (!empty($args['course'])) {
+                    $courseVal = $args['course'];
+                    $q->where(function ($sq) use ($courseVal) {
+                        $sq->where('course', 'like', "%{$courseVal}%")
+                           ->orWhere('title', 'like', "%{$courseVal}%");
+                    });
+                }
+                if (!empty($args['instructor'])) {
+                    $q->where('instructor', 'like', "%{$args['instructor']}%");
+                }
+                if (!empty($args['room'])) {
+                    $q->where('room', 'like', "%{$args['room']}%");
+                }
+                $schedules = $q->orderBy('day')->orderBy('start_time')->get();
+                return [
+                    'success' => true,
+                    'count' => $schedules->count(),
+                    'data' => $schedules->toArray(),
+                ];
 
-            case 'book_room':
-                $room = Room::where('room_number', $args['room_number'] ?? '')->first();
-                if (!$room) return ['success' => false, 'message' => 'Room not found'];
+            // Tool 2: Room Availability & Inventory
+            case 'get_room_availability':
+                $roomNum = strtoupper(trim($args['room'] ?? $args['room_number'] ?? ''));
+                $date = $args['date'] ?? '2026-09-05';
+                $startTime = $args['start_time'] ?? '08:00';
+                $endTime = $args['end_time'] ?? '18:00';
+
+                $room = Room::where('room_number', $roomNum)->orWhere('id', $roomNum)->first();
+                if (!$room) {
+                    return [
+                        'success' => false,
+                        'available' => false,
+                        'message' => "Room {$roomNum} does not exist in the database."
+                    ];
+                }
+
                 $bookings = $room->bookings ?? [];
-                
-                // Clash check
+                $conflicts = [];
                 foreach ($bookings as $b) {
-                    if (($b['date'] ?? '') === ($args['date'] ?? '')) {
-                        if (($args['start_time'] ?? '') < ($b['end_time'] ?? '') && ($args['end_time'] ?? '') > ($b['start_time'] ?? '')) {
-                            return ['success' => false, 'message' => "Clash with existing booking for '{$b['purpose']}'"];
+                    if (($b['date'] ?? '') === $date) {
+                        $bStart = $b['start_time'] ?? '00:00';
+                        $bEnd = $b['end_time'] ?? '23:59';
+                        if ($startTime < $bEnd && $endTime > $bStart) {
+                            $conflicts[] = $b;
                         }
                     }
                 }
 
-                $newBk = [
-                    'booking_id' => 'bk-' . Str::random(6),
-                    'booked_by' => $args['booked_by'] ?? 'Student',
-                    'date' => $args['date'] ?? '2026-09-05',
-                    'start_time' => $args['start_time'] ?? '14:00',
-                    'end_time' => $args['end_time'] ?? '16:00',
-                    'purpose' => $args['purpose'] ?? 'General booking',
+                $isAvailable = empty($conflicts) && $room->status === 'available';
+
+                return [
+                    'success' => true,
+                    'room_number' => $room->room_number,
+                    'type' => $room->type,
+                    'capacity' => $room->capacity,
+                    'equipment' => $room->equipment ?? [],
+                    'status' => $room->status,
+                    'date' => $date,
+                    'requested_slot' => "{$startTime} - {$endTime}",
+                    'available' => $isAvailable,
+                    'conflicts' => $conflicts,
+                    'all_bookings_on_date' => array_values(array_filter($bookings, fn($b) => ($b['date'] ?? '') === $date)),
                 ];
-                $bookings[] = $newBk;
-                $room->bookings = $bookings;
-                $room->save();
-                return ['success' => true, 'booking' => $newBk, 'room' => $room->toArray()];
 
-            case 'register_for_event':
-                $event = Event::find($args['event_id'] ?? '') ?: Event::where('name', 'like', "%{$args['event_name']}%")->first();
-                if (!$event) return ['success' => false, 'message' => 'Event not found'];
-                if ($event->registered >= $event->capacity) return ['success' => false, 'message' => 'Event is full'];
-
-                $regs = $event->registrations ?? [];
-                $studentId = $args['student_id'] ?? '20-40532';
-                foreach ($regs as $r) {
-                    if (($r['student_id'] ?? '') === $studentId) {
-                        return ['success' => false, 'message' => 'Already registered'];
+            case 'get_rooms':
+            case 'search_rooms':
+                $q = Room::query();
+                if (!empty($args['type'])) {
+                    $q->where('type', $args['type']);
+                }
+                if (!empty($args['min_capacity'])) {
+                    $q->where('capacity', '>=', (int)$args['min_capacity']);
+                }
+                if (!empty($args['equipment'])) {
+                    foreach ((array)$args['equipment'] as $eq) {
+                        $eq = trim($eq);
+                        if ($eq !== '') {
+                            $q->whereJsonContains('equipment', $eq);
+                        }
                     }
                 }
-                $regs[] = ['student_id' => $studentId, 'name' => $args['name'] ?? 'Student'];
-                $event->registrations = $regs;
-                $event->registered = count($regs);
-                if ($event->registered >= $event->capacity) $event->status = 'full';
-                $event->save();
-                return ['success' => true, 'event' => $event->toArray()];
+                if (!empty($args['room_number'])) {
+                    $q->where('room_number', 'like', "%{$args['room_number']}%");
+                }
+                $rooms = $q->orderBy('room_number')->get();
+                return [
+                    'success' => true,
+                    'count' => $rooms->count(),
+                    'data' => $rooms->toArray(),
+                ];
 
+            // Tool 3: Campus Events
+            case 'get_events':
+                $q = Event::query();
+                if (!empty($args['upcoming_only'])) {
+                    $q->whereIn('status', ['upcoming', 'ongoing']);
+                }
+                if (!empty($args['category'])) {
+                    $q->where('category', $args['category']);
+                }
+                if (!empty($args['date'])) {
+                    $q->where('date', $args['date']);
+                }
+                $events = $q->orderBy('date')->orderBy('start_time')->get();
+                return [
+                    'success' => true,
+                    'count' => $events->count(),
+                    'data' => $events->toArray(),
+                ];
+
+            // Tool 4: Announcements & Notices
             case 'get_announcements':
                 $q = Announcement::query();
-                if (!empty($args['priority'])) $q->where('priority', $args['priority']);
-                return ['success' => true, 'data' => $q->orderByDesc('date')->get()->toArray()];
+                if (!empty($args['priority'])) {
+                    $q->where('priority', $args['priority']);
+                }
+                if (!empty($args['active_only'])) {
+                    $q->where('expires', '>=', '2026-09-04');
+                }
+                $announcements = $q->orderByDesc('date')->get();
+                return [
+                    'success' => true,
+                    'count' => $announcements->count(),
+                    'data' => $announcements->toArray(),
+                ];
 
+            // Tool 5: Assignments & Deadlines
             case 'get_assignments':
-                return ['success' => true, 'data' => Assignment::orderBy('deadline')->get()->toArray()];
+                $q = Assignment::query();
+                if (!empty($args['course'])) {
+                    $q->where('course', 'like', "%{$args['course']}%");
+                }
+                if (!empty($args['status'])) {
+                    $q->where('status', $args['status']);
+                }
+                if (!empty($args['upcoming_only'])) {
+                    $q->where('deadline', '>=', '2026-09-04');
+                }
+                $assignments = $q->orderBy('deadline')->get();
+                return [
+                    'success' => true,
+                    'count' => $assignments->count(),
+                    'data' => $assignments->toArray(),
+                ];
 
-            case 'create_event':
-                $event = Event::create([
-                    'id' => $args['id'] ?? ('ev-' . Str::random(5)),
-                    'name' => $args['name'],
-                    'organizer' => $args['organizer'] ?? 'Campus Admin',
-                    'date' => $args['date'],
-                    'start_time' => $args['start_time'],
-                    'end_time' => $args['end_time'],
-                    'venue' => $args['venue'],
-                    'capacity' => (int)($args['capacity'] ?? 100),
-                    'registered' => 0,
-                    'status' => 'upcoming',
-                    'category' => $args['category'] ?? 'academic',
-                    'description' => $args['description'] ?? '',
-                ]);
-                return ['success' => true, 'event' => $event->toArray()];
+            // Tool 6: Mutation - Book Room (Admin Only)
+            case 'book_room':
+                $roomNum = strtoupper(trim($args['room'] ?? $args['room_number'] ?? ''));
+                $date = $args['date'] ?? '2026-09-05';
+                $startTime = $args['start_time'] ?? '14:00';
+                $endTime = $args['end_time'] ?? '16:00';
+                $purpose = $args['purpose'] ?? 'Official Department Meeting';
+                $bookedBy = $args['booked_by'] ?? 'Campus Administrator';
 
-            case 'delete_event':
-                $event = Event::find($args['event_id'] ?? '') ?: Event::where('name', 'like', "%{$args['name']}%")->first();
-                if (!$event) return ['success' => false, 'message' => 'Event not found to delete'];
-                $event->delete();
-                return ['success' => true, 'message' => 'Event deleted successfully'];
+                $room = Room::where('room_number', $roomNum)->orWhere('id', $roomNum)->first();
+                if (!$room) {
+                    return [
+                        'success' => false,
+                        'message' => "Room {$roomNum} does not exist in the database."
+                    ];
+                }
 
-            case 'create_announcement':
-                $ann = Announcement::create([
-                    'id' => $args['id'] ?? ('ann-' . Str::random(5)),
-                    'title' => $args['title'],
-                    'category' => $args['category'] ?? 'General',
-                    'priority' => $args['priority'] ?? 'medium',
-                    'content' => $args['content'] ?? '',
-                    'target_audience' => $args['target_audience'] ?? 'All Students',
-                    'date' => date('Y-m-d'),
-                ]);
-                return ['success' => true, 'announcement' => $ann->toArray()];
+                $bookings = $room->bookings ?? [];
+
+                // Check clash detection
+                foreach ($bookings as $b) {
+                    if (($b['date'] ?? '') === $date) {
+                        $existingStart = $b['start_time'] ?? '00:00';
+                        $existingEnd = $b['end_time'] ?? '23:59';
+                        if ($startTime < $existingEnd && $endTime > $existingStart) {
+                            return [
+                                'success' => false,
+                                'clash' => true,
+                                'message' => "Time Conflict: Room {$room->room_number} is already booked on {$date} from {$existingStart} to {$existingEnd} for '{$b['purpose']}' ({$b['booked_by']})."
+                            ];
+                        }
+                    }
+                }
+
+                $newBooking = [
+                    'booking_id' => 'bk-' . Str::random(6),
+                    'booked_by' => $bookedBy,
+                    'date' => $date,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'purpose' => $purpose,
+                ];
+
+                $bookings[] = $newBooking;
+                $room->bookings = $bookings;
+                $room->save();
+
+                return [
+                    'success' => true,
+                    'confirmed_by_db' => true,
+                    'message' => "Successfully booked Room {$room->room_number} on {$date} ({$startTime} - {$endTime}).",
+                    'booking' => $newBooking,
+                    'room' => $room->toArray(),
+                ];
+
+            // Tool 7: Mutation - Cancel Room Booking (Admin Only)
+            case 'cancel_room_booking':
+                $roomNum = strtoupper(trim($args['room'] ?? $args['room_number'] ?? ''));
+                $bookingId = $args['booking_id'] ?? null;
+                $date = $args['date'] ?? null;
+                $startTime = $args['start_time'] ?? null;
+
+                $room = Room::where('room_number', $roomNum)->orWhere('id', $roomNum)->first();
+                if (!$room) {
+                    return [
+                        'success' => false,
+                        'message' => "Room {$roomNum} does not exist."
+                    ];
+                }
+
+                $bookings = $room->bookings ?? [];
+                $found = false;
+                $updated = [];
+                $cancelledBooking = null;
+
+                foreach ($bookings as $b) {
+                    $matchesId = $bookingId && (($b['booking_id'] ?? '') === $bookingId);
+                    $matchesSlot = $date && (($b['date'] ?? '') === $date) && (!$startTime || ($b['start_time'] ?? '') === $startTime);
+
+                    if (!$found && ($matchesId || $matchesSlot)) {
+                        $found = true;
+                        $cancelledBooking = $b;
+                    } else {
+                        $updated[] = $b;
+                    }
+                }
+
+                if (!$found) {
+                    return [
+                        'success' => false,
+                        'message' => "No matching booking found for Room {$room->room_number} to cancel."
+                    ];
+                }
+
+                $room->bookings = $updated;
+                $room->save();
+
+                return [
+                    'success' => true,
+                    'confirmed_by_db' => true,
+                    'message' => "Successfully cancelled booking for Room {$room->room_number}.",
+                    'cancelled_booking' => $cancelledBooking,
+                ];
+
+            // Student Event Registration Tool
+            case 'register_for_event':
+                $event = Event::find($args['event_id'] ?? '') ?: Event::where('name', 'like', "%" . ($args['event_name'] ?? '') . "%")->first();
+                if (!$event) {
+                    return ['success' => false, 'message' => 'Event not found'];
+                }
+                if ($event->registered >= $event->capacity) {
+                    return ['success' => false, 'message' => "Event '{$event->name}' is already full (Capacity: {$event->capacity})."];
+                }
+
+                $regs = $event->registrations ?? [];
+                $studentId = $args['student_id'] ?? '22-45123';
+                foreach ($regs as $r) {
+                    if (($r['student_id'] ?? '') === $studentId) {
+                        return ['success' => false, 'message' => "You are already registered for '{$event->name}'."];
+                    }
+                }
+                $regs[] = ['student_id' => $studentId, 'name' => $args['name'] ?? 'Current Student'];
+                $event->registrations = $regs;
+                $event->registered = count($regs);
+                if ($event->registered >= $event->capacity) {
+                    $event->status = 'full';
+                }
+                $event->save();
+                return [
+                    'success' => true,
+                    'message' => "Successfully registered for {$event->name}!",
+                    'event' => $event->toArray(),
+                ];
 
             default:
-                return ['success' => false, 'message' => 'Unknown tool'];
+                return [
+                    'success' => false,
+                    'message' => "Unknown tool: {$toolName}"
+                ];
         }
     }
 
@@ -751,97 +880,245 @@ Keep your answers helpful, clear, and accurate."
         return sprintf('%02d:%02d', $hour, (int)$m);
     }
 
-    private function getToolsDefinition(): array
+    /**
+     * Gemini Function Declarations Specification
+     */
+    private function getGeminiToolsDefinition(): array
     {
         return [
             [
-                'type' => 'function',
-                'function' => [
-                    'name' => 'get_schedules',
-                    'description' => 'Get class timetable schedules filtered by course, day, or room.',
-                    'parameters' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'day' => ['type' => 'string', 'enum' => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday']],
-                            'course' => ['type' => 'string'],
-                        ],
+                'function_declarations' => [
+                    [
+                        'name' => 'get_schedule',
+                        'description' => 'Query live university class timetables and schedules filtered by day of week, course code/title, instructor, or room.',
+                        'parameters' => [
+                            'type' => 'OBJECT',
+                            'properties' => [
+                                'day' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Day of the week: Sunday, Monday, Tuesday, Wednesday, Thursday'
+                                ],
+                                'course' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Course code (e.g. CSE 4113) or course title (e.g. Computer Graphics)'
+                                ],
+                                'instructor' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Instructor name'
+                                ],
+                                'room' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Room number (e.g. 7A03)'
+                                ]
+                            ]
+                        ]
                     ],
-                ],
-            ],
-            [
-                'type' => 'function',
-                'function' => [
-                    'name' => 'search_rooms',
-                    'description' => 'Find available rooms with capacity, type, and equipment filters.',
-                    'parameters' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'type' => ['type' => 'string', 'enum' => ['classroom', 'lab', 'seminar']],
-                            'min_capacity' => ['type' => 'integer'],
-                            'equipment' => ['type' => 'array', 'items' => ['type' => 'string']],
-                        ],
+                    [
+                        'name' => 'get_room_availability',
+                        'description' => 'Check exact live availability and conflict details for a specific university room on a given date and time range.',
+                        'parameters' => [
+                            'type' => 'OBJECT',
+                            'required' => ['room'],
+                            'properties' => [
+                                'room' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Room number (e.g. 7A03, 7B01, 7C02)'
+                                ],
+                                'date' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Date in YYYY-MM-DD format (e.g. 2026-09-05)'
+                                ],
+                                'start_time' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Start time in 24h HH:MM format (e.g. 14:00)'
+                                ],
+                                'end_time' => [
+                                    'type' => 'STRING',
+                                    'description' => 'End time in 24h HH:MM format (e.g. 16:00)'
+                                ]
+                            ]
+                        ]
                     ],
-                ],
-            ],
-            [
-                'type' => 'function',
-                'function' => [
-                    'name' => 'book_room',
-                    'description' => 'Book a university room for a specific date and time slot.',
-                    'parameters' => [
-                        'type' => 'object',
-                        'required' => ['room_number', 'date', 'start_time', 'end_time', 'booked_by', 'purpose'],
-                        'properties' => [
-                            'room_number' => ['type' => 'string'],
-                            'date' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
-                            'start_time' => ['type' => 'string', 'description' => 'HH:MM in 24h'],
-                            'end_time' => ['type' => 'string', 'description' => 'HH:MM in 24h'],
-                            'booked_by' => ['type' => 'string'],
-                            'purpose' => ['type' => 'string'],
-                        ],
+                    [
+                        'name' => 'search_rooms',
+                        'description' => 'Search and filter campus rooms by type (classroom, lab, seminar), minimum capacity, or required equipment (e.g. projector, AC, whiteboard).',
+                        'parameters' => [
+                            'type' => 'OBJECT',
+                            'properties' => [
+                                'type' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Room type: classroom, lab, or seminar'
+                                ],
+                                'min_capacity' => [
+                                    'type' => 'INTEGER',
+                                    'description' => 'Minimum capacity required'
+                                ],
+                                'equipment' => [
+                                    'type' => 'ARRAY',
+                                    'items' => ['type' => 'STRING'],
+                                    'description' => 'List of equipment items, e.g. ["projector", "AC"]'
+                                ],
+                                'room_number' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Room code query'
+                                ]
+                            ]
+                        ]
                     ],
-                ],
-            ],
-            [
-                'type' => 'function',
-                'function' => [
-                    'name' => 'register_for_event',
-                    'description' => 'Register a student for a campus event.',
-                    'parameters' => [
-                        'type' => 'object',
-                        'required' => ['event_id', 'student_id', 'name'],
-                        'properties' => [
-                            'event_id' => ['type' => 'string'],
-                            'student_id' => ['type' => 'string'],
-                            'name' => ['type' => 'string'],
-                        ],
+                    [
+                        'name' => 'get_events',
+                        'description' => 'Query live university campus events, workshops, hackathons, and guest lectures.',
+                        'parameters' => [
+                            'type' => 'OBJECT',
+                            'properties' => [
+                                'upcoming_only' => [
+                                    'type' => 'BOOLEAN',
+                                    'description' => 'Set to true to only fetch upcoming/ongoing events'
+                                ],
+                                'category' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Event category filter'
+                                ],
+                                'date' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Specific date in YYYY-MM-DD format'
+                                ]
+                            ]
+                        ]
                     ],
-                ],
-            ],
-            [
-                'type' => 'function',
-                'function' => [
-                    'name' => 'get_announcements',
-                    'description' => 'Get campus notices and announcements.',
-                    'parameters' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'priority' => ['type' => 'string', 'enum' => ['high', 'medium', 'low']],
-                        ],
+                    [
+                        'name' => 'get_announcements',
+                        'description' => 'Get departmental notices, official circulars, and campus bulletins.',
+                        'parameters' => [
+                            'type' => 'OBJECT',
+                            'properties' => [
+                                'priority' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Priority level: high, medium, or low'
+                                ],
+                                'active_only' => [
+                                    'type' => 'BOOLEAN',
+                                    'description' => 'Filter out expired notices'
+                                ]
+                            ]
+                        ]
                     ],
-                ],
-            ],
-            [
-                'type' => 'function',
-                'function' => [
-                    'name' => 'get_assignments',
-                    'description' => 'Get assignment deadlines and submission statuses.',
-                    'parameters' => [
-                        'type' => 'object',
-                        'properties' => [],
+                    [
+                        'name' => 'get_assignments',
+                        'description' => 'Query course assignments, deadlines, submission platforms, and status from the live database.',
+                        'parameters' => [
+                            'type' => 'OBJECT',
+                            'properties' => [
+                                'course' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Course code filter'
+                                ],
+                                'status' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Status filter: pending, submitted, graded, late'
+                                ],
+                                'upcoming_only' => [
+                                    'type' => 'BOOLEAN',
+                                    'description' => 'Set to true to only view pending/due assignments'
+                                ]
+                            ]
+                        ]
                     ],
-                ],
-            ],
+                    [
+                        'name' => 'register_for_event',
+                        'description' => 'Register a student for an upcoming campus event.',
+                        'parameters' => [
+                            'type' => 'OBJECT',
+                            'properties' => [
+                                'event_id' => ['type' => 'STRING'],
+                                'event_name' => ['type' => 'STRING'],
+                                'student_id' => ['type' => 'STRING'],
+                                'name' => ['type' => 'STRING']
+                            ]
+                        ]
+                    ],
+                    [
+                        'name' => 'book_room',
+                        'description' => 'MUTATION (Admin Only): Book a university room slot. Requires Admin privileges.',
+                        'parameters' => [
+                            'type' => 'OBJECT',
+                            'required' => ['room', 'date', 'start_time', 'end_time', 'purpose'],
+                            'properties' => [
+                                'room' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Room number (e.g. 7A03)'
+                                ],
+                                'date' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Booking date in YYYY-MM-DD format'
+                                ],
+                                'start_time' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Start time in 24h format HH:MM'
+                                ],
+                                'end_time' => [
+                                    'type' => 'STRING',
+                                    'description' => 'End time in 24h format HH:MM'
+                                ],
+                                'purpose' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Purpose of booking'
+                                ],
+                                'booked_by' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Name or department booking the room'
+                                ]
+                            ]
+                        ]
+                    ],
+                    [
+                        'name' => 'cancel_room_booking',
+                        'description' => 'MUTATION (Admin Only): Cancel an existing room reservation. Requires Admin privileges.',
+                        'parameters' => [
+                            'type' => 'OBJECT',
+                            'required' => ['room'],
+                            'properties' => [
+                                'room' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Room number'
+                                ],
+                                'booking_id' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Booking ID to cancel (e.g. bk-001)'
+                                ],
+                                'date' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Date in YYYY-MM-DD'
+                                ],
+                                'start_time' => [
+                                    'type' => 'STRING',
+                                    'description' => 'Start time HH:MM'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
         ];
+    }
+
+    /**
+     * OpenAI Tools Specification
+     */
+    private function getOpenAIToolsDefinition(): array
+    {
+        $geminiTools = $this->getGeminiToolsDefinition()[0]['function_declarations'];
+        $openAiTools = [];
+        foreach ($geminiTools as $gt) {
+            $openAiTools[] = [
+                'type' => 'function',
+                'function' => [
+                    'name' => $gt['name'],
+                    'description' => $gt['description'],
+                    'parameters' => $gt['parameters'] ?? ['type' => 'object', 'properties' => []],
+                ]
+            ];
+        }
+        return $openAiTools;
     }
 }

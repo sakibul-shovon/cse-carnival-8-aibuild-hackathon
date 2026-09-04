@@ -1,0 +1,109 @@
+﻿# CampusOS (AUST Intelligent Campus & Operations Platform)
+=========================================================
+
+1. PROJECT OVERVIEW
+-------------------
+CampusOS is a full-stack smart university campus platform for Ahsanullah University of Science and Technology (AUST).
+Built with:
+- Backend: Laravel 11 (PHP 8.2+) REST API with Laravel Sanctum & Role-Based Access Control (RBAC).
+- Frontend: React 19 SPA, Vite, Tailwind CSS v4, Lucide Icons.
+- Database: MySQL / SQLite (Schedules, Rooms, Events, Announcements, Assignments, Users).
+- AI Engine: Autonomous Hybrid LLM Agent (OpenAI/Groq/Gemini + Local Tool Execution Engine).
+
+
+2. DIRECTORY STRUCTURE
+----------------------
+
+campusos/
+│
+├── backend/                                # Laravel 11 REST API Application
+│   ├── app/
+│   │   ├── Http/
+│   │   │   ├── Controllers/
+│   │   │   │   ├── AuthController.php      # User login, register, profile (/me), logout
+│   │   │   │   ├── DashboardController.php # System aggregated metrics & stats
+│   │   │   │   ├── ScheduleController.php  # Class timetables CRUD & search
+│   │   │   │   ├── RoomController.php      # Room inventory, availability, clash detection, booking
+│   │   │   │   ├── EventController.php     # Campus events & student registrations
+│   │   │   │   ├── AnnouncementController.php # Department notices & circulars
+│   │   │   │   ├── AssignmentController.php   # Academic tasks & deadlines
+│   │   │   │   └── AgentController.php     # AI Assistant conversation endpoint
+│   │   │   └── Middleware/
+│   │   │       └── RoleMiddleware.php      # Enforces 'admin' / 'student' roles with HTTP 403
+│   │   ├── Models/
+│   │   │   ├── User.php                    # User entity with Sanctum tokens & roles
+│   │   │   ├── Schedule.php                # Class schedule model
+│   │   │   ├── Room.php                    # Room model with JSON bookings & equipment
+│   │   │   ├── Event.php                   # Event model with JSON registrations
+│   │   │   ├── Announcement.php            # Notice model
+│   │   │   └── Assignment.php              # Assignment model
+│   │   └── Services/
+│   │       └── AgentService.php            # Autonomous AI agent engine with live database tools
+│   ├── database/
+│   │   ├── migrations/
+│   │   │   ├── 0001_01_01_000000_create_users_table.php
+│   │   │   ├── 2026_09_04_105233_create_personal_access_tokens_table.php
+│   │   │   └── 2026_09_04_120000_create_campus_os_tables.php
+│   │   └── seeders/
+│   │       └── DatabaseSeeder.php          # Demo accounts & seed datasets
+│   └── routes/
+│       └── api.php                         # Sanctum & role:admin protected API routes
+│
+├── client/                                 # React 19 Frontend SPA
+│   ├── src/
+│   │   ├── components/
+│   │   │   └── ProtectedRoute.jsx          # Redirects unauthenticated visitors to /login
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx             # React auth state (token, user, login, register, logout)
+│   │   ├── layouts/
+│   │   │   └── Layout.jsx                  # Main dashboard layout (Sidebar, Topbar, User profile)
+│   │   ├── pages/
+│   │   │   ├── Login.jsx                   # Sign-in page with 1-click demo accounts
+│   │   │   ├── Register.jsx                # Student registration page
+│   │   │   ├── Overview.jsx                # Intelligence Center dashboard
+│   │   │   ├── Schedules.jsx               # Class schedule viewer & timetable manager
+│   │   │   ├── Rooms.jsx                   # Student: informational view | Admin: booking & CRUD
+│   │   │   ├── Events.jsx                  # Events calendar & registration
+│   │   │   ├── Announcements.jsx           # Campus notice board
+│   │   │   ├── Assignments.jsx             # Homework & term paper tracker
+│   │   │   └── Assistant.jsx               # AI Agent Chat Interface
+│   │   ├── services/
+│   │   │   └── api.js                      # Axios HTTP client with Bearer token interceptor
+│   │   ├── App.jsx                         # React Router route definitions
+│   │   └── main.jsx                        # Application root entry
+│   ├── package.json
+│   └── vite.config.js
+│
+├── data/                                   # Seed JSON Datasets
+│   ├── schedules.json
+│   ├── rooms.json
+│   ├── events.json
+│   ├── announcements.json
+│   └── assignments.json
+│
+├── sample_queries/                         # Sample queries for evaluation
+├── schema/                                 # Database schema definitions
+├── PROBLEM_STATEMENT.md
+├── README.md
+└── SUBMISSION.md
+
+
+3. ROLE-BASED PERMISSIONS (RBAC)
+--------------------------------
+- Student:
+  * Read-only access to class schedules, rooms, announcements, and assignments.
+  * Register for upcoming campus events.
+  * Natural language AI queries for room availability, schedules, deadlines, etc.
+  * Cannot book rooms, edit schedules, or mutate campus records (Backend enforces HTTP 403).
+
+- Admin:
+  * Full CRUD on schedules, rooms, events, announcements, and assignments.
+  * Exclusive room reservation & booking capabilities with automated clash detection.
+  * Cancel existing room reservations.
+  * AI Assistant can execute room bookings on behalf of admins.
+
+
+4. DEMO CREDENTIALS
+-------------------
+- Student: student@campusos.com | password
+- Admin:   admin@campusos.com   | password
