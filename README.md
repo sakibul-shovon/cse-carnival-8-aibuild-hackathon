@@ -1,102 +1,89 @@
-# CampusOS — AI Build Hackathon
+# CampusOS
 
-An intelligent university platform powered by an AI agent that understands and acts on real-time campus data.
+CampusOS is a live university operations workspace for students. It brings schedules, rooms, events, announcements, and assignments into one polished dashboard, then layers a tool-using campus agent on top. Dashboard edits and agent actions share the same D1 database, so every answer, room booking, and event registration reflects the latest data immediately.
 
----
+## What works
 
-## The Challenge
+- View, search, add, edit, and delete records in all five campus systems
+- Persist changes in a Cloudflare D1-compatible SQLite database
+- Book rooms with schedule and booking conflict checks, then cancel your own bookings
+- Register for events, detect duplicate/full registrations, and cancel your registration
+- Ask the agent the supplied judging queries and inspect the real tools it called
+- Use an optional OpenAI Responses API function-calling path, with a no-key local tool router as a reliable fallback
+- Responsive navigation, loading/empty/error states, and inline success feedback
 
-Students struggle daily with scattered campus information — class changes buried in group chats, deadlines forgotten until the last minute, no easy way to know what's happening on campus right now.
+## Tech stack
 
-Your job: build **CampusOS** — a two-part app with a data dashboard and an AI agent that always reads live data.
+- **Frontend:** React 19, TypeScript, Vinext, Tailwind CSS, shadcn components, Lucide icons
+- **Backend:** Vinext route handlers running on the Cloudflare Workers runtime
+- **Database:** Cloudflare D1 / SQLite, with a checked-in migration and automatic seed import from `data/*.json`
+- **AI:** OpenAI Responses API with strict custom functions when `OPENAI_API_KEY` is present; deterministic server-side tool execution otherwise
 
-Read the full problem statement → [`PROBLEM_STATEMENT.md`](./PROBLEM_STATEMENT.md)
+## Run locally
 
----
-
-## Repository Structure
-
-```
-campusos-hackathon/
-│
-├── README.md                    ← You are here
-├── PROBLEM_STATEMENT.md         ← Full problem statement + scoring
-├── SUBMISSION.md                ← How and where to submit
-│
-├── data/                        ← Seed data (load these into your backend)
-│   ├── schedules.json
-│   ├── rooms.json
-│   ├── events.json
-│   ├── announcements.json
-│   └── assignments.json
-│
-├── schema/
-│   └── schema.md                ← Field names, types, and constraints for all 5 systems
-│
-└── sample_queries/
-    └── sample_queries.md        ← Queries we will use when judging your agent
-```
-
----
-
-## How to Participate
-
-### 1. Fork the repository
-
-Click **Fork** in the top-right corner of this repo's GitHub page. This creates your own copy under your GitHub account, where you'll build your solution.
-
-### 2. Clone your fork
+Requirements: Node.js 22.13 or newer and npm.
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/campusos-hackathon.git
-cd campusos-hackathon
+cd application
+npm install
+npm run db:migrate:local
+npm run dev
 ```
 
-### 3. Build your solution inside your fork
+Open [http://localhost:3000](http://localhost:3000). The first data request automatically loads the five supplied JSON datasets into D1. Later restarts keep the database you changed.
 
-> Your solution lives in your fork — do not open a pull request to this repo.
+If you want to start from the original seed again, remove `application/.wrangler/` and rerun `npm run db:migrate:local` before starting the app.
 
-### 4. Making your fork private
+## Environment variables
 
-By default, a fork is public. If you want to keep your work hidden from other participants while you build:
+The app runs without any environment variables. To enable the LLM-backed function-calling path, copy `.env.example` to `application/.env.local` and set:
 
-1. Go to your fork on GitHub
-2. Open **Settings** (top of the repo page)
-3. Scroll to the **Danger Zone** at the bottom
-4. Click **Change repository visibility** → **Make private**
-5. Confirm by typing the repository name
+```env
+OPENAI_API_KEY=your_key_here
+OPENAI_MODEL=gpt-5.4-mini
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
 
-> **You may keep your fork private during the hackathon period, but it must be switched back to public by 8:30 PM on the submission deadline.** Repositories still private after that time will not be judged. To make it public again, repeat the steps above and choose **Make public** instead.
+- `OPENAI_API_KEY` is optional and must never be committed.
+- `OPENAI_MODEL` is optional; it defaults to `gpt-5.4-mini`.
+- `NEXT_PUBLIC_SITE_URL` is used only for social-preview metadata.
 
-### 5. Submit
+## Using the agent
 
-Submit your fork's public URL via the instructions in [`SUBMISSION.md`](./SUBMISSION.md).
+Try these in the Campus agent panel:
 
----
+- “When is my next class?”
+- “What classes do I have on Wednesday?”
+- “What assignments are due this week?”
+- “Show me all high priority announcements.”
+- “Which labs have a projector and can fit at least 30 people?”
+- “Book Room 7A02 tomorrow from 3 PM to 5 PM.”
+- “Register me for the Guest Lecture on Deep Learning.”
+- “I need a room for 5 people with a projector, tomorrow between 2 and 4.”
 
-## Quick Links
+The agent reads the live database for every request. Update a notice or room in the dashboard, then ask about it—the response will use the new value. Vague booking requests prompt for missing details, and unauthorized destructive or other-student actions are refused.
 
-| Resource | Link |
-|----------|------|
-| Full problem statement | [`PROBLEM_STATEMENT.md`](./PROBLEM_STATEMENT.md) |
-| Data schema | [`schema/schema.md`](./schema/schema.md) |
-| Sample agent queries | [`sample_queries/sample_queries.md`](./sample_queries/sample_queries.md) |
-| Submission guide | [`SUBMISSION.md`](./SUBMISSION.md) |
+## Project structure
 
----
+```text
+application/
+  app/api/agent/       Agent endpoint and OpenAI tool loop
+  app/api/records/     CRUD endpoint for all five systems
+  app/api/actions/     Booking and registration actions
+  components/          CampusOS interface and UI primitives
+  db/                  Drizzle schema
+  drizzle/             D1 migration
+  lib/                 Shared data access, schemas, seeds, and tools
+data/                   Original hackathon seed JSON
+schema/                 Challenge schema reference
+sample_queries/         Judging query examples
+```
 
-## Seed Data Overview
+## Production build
 
-| File | Records | What It Contains |
-|------|---------|-----------------|
-| `schedules.json` | 24 | Class timetable — course, day, time, room, instructor |
-| `rooms.json` | 20 | Rooms 7A01–7A07, 7B01–7B08, 7C01–7C05 with equipment and bookings |
-| `events.json` | 7 | Campus events with registration lists |
-| `announcements.json` | 8 | Notices with priority levels and expiry dates |
-| `assignments.json` | 8 | Course assignments with deadlines and submission status |
+```bash
+cd application
+npm run build
+```
 
-> **Important:** These JSON files are only the starting/seed data — not the database itself. Load them into a real backend (a database, or at minimum a backend service with persistent storage) on app startup. Your dashboard and AI agent must both read from and write to that backend, not the static JSON files directly. If you add, edit, or delete a record, the change must be saved in your backend and still be there after a reload — the JSON files in this repo will not update. The agent is also expected to always query the current backend state, not a cached or hardcoded copy of the seed data.
-
----
-
-Good luck. Build something that actually works.
+The build emits a Cloudflare Worker-compatible server bundle and includes the D1 migration metadata required by the hosting platform.
