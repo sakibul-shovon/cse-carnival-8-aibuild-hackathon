@@ -16,32 +16,32 @@ class AgentService
     /**
      * Process natural language queries with live tools calling against the database.
      */
-    public function processQuery(string $message, array $history = []): array
+    public function processQuery(string $message, array $history = [], string $role = 'student'): array
     {
         $openaiKey = env('OPENAI_API_KEY');
         $geminiKey = env('GEMINI_API_KEY') ?: env('GOOGLE_API_KEY');
         $groqKey = env('GROQ_API_KEY');
 
         if ($openaiKey && !str_starts_with($openaiKey, 'your_')) {
-            return $this->processWithOpenAI($message, $history, $openaiKey);
+            return $this->processWithOpenAI($message, $history, $openaiKey, $role);
         }
 
         if ($groqKey && !str_starts_with($groqKey, 'your_')) {
-            return $this->processWithGroq($message, $history, $groqKey);
+            return $this->processWithGroq($message, $history, $groqKey, $role);
         }
 
         if ($geminiKey && !str_starts_with($geminiKey, 'your_')) {
-            return $this->processWithGemini($message, $history, $geminiKey);
+            return $this->processWithGemini($message, $history, $geminiKey, $role);
         }
 
         // Deterministic Fallback Tool Execution engine if no API key is provided
-        return $this->processWithLocalEngine($message);
+        return $this->processWithLocalEngine($message, $role);
     }
 
     /**
      * OpenAI Function / Tool Calling Implementation
      */
-    private function processWithOpenAI(string $message, array $history, string $apiKey): array
+    private function processWithOpenAI(string $message, array $history, string $apiKey, string $role = 'student'): array
     {
         $tools = $this->getToolsDefinition();
         $messages = [
@@ -49,10 +49,14 @@ class AgentService
                 'role' => 'system',
                 'content' => "You are CampusOS AI Agent — an intelligent university assistant for AUST (Ahsanullah University of Science and Technology). 
 Current Simulated Date: Friday, September 4, 2026.
+Current User Role: {$role}.
 You have tools to read, search, book rooms, register for events, and fetch live data from the database.
 Always query the live database using your tools.
+IMPORTANT PERMISSION RULES:
+- Students can search rooms, check availability, view equipment, and register for campus events.
+- Students CANNOT book rooms, reserve rooms, cancel room bookings, or mutate rooms. If a student asks to book/reserve a room, inform them politely that room booking requires university admin permissions.
+- Admins can book rooms, cancel room bookings, and mutate campus resources.
 For ambiguous or vague requests (e.g. 'book me any room tomorrow'), do NOT book immediately — ask clarification for exact time and room.
-Refuse unauthorized destructive requests.
 Keep your answers helpful, clear, and accurate."
             ]
         ];
@@ -78,13 +82,13 @@ Keep your answers helpful, clear, and accurate."
 
             if (!$response->successful()) {
                 Log::error('OpenAI Error', ['body' => $response->body()]);
-                return $this->processWithLocalEngine($message);
+                return $this->processWithLocalEngine($message, $role);
             }
 
             $resData = $response->json();
             $choice = $resData['choices'][0]['message'] ?? null;
             if (!$choice) {
-                return $this->processWithLocalEngine($message);
+                return $this->processWithLocalEngine($message, $role);
             }
 
             $executedActions = [];
@@ -93,7 +97,7 @@ Keep your answers helpful, clear, and accurate."
                 foreach ($choice['tool_calls'] as $toolCall) {
                     $funcName = $toolCall['function']['name'];
                     $args = json_decode($toolCall['function']['arguments'], true) ?? [];
-                    $toolResult = $this->executeTool($funcName, $args);
+                    $toolResult = $this->executeTool($funcName, $args, $role);
                     $executedActions[] = [
                         'tool' => $funcName,
                         'args' => $args,
@@ -133,20 +137,20 @@ Keep your answers helpful, clear, and accurate."
             ];
         } catch (\Throwable $e) {
             Log::error('OpenAI Exception: ' . $e->getMessage());
-            return $this->processWithLocalEngine($message);
+            return $this->processWithLocalEngine($message, $role);
         }
     }
 
     /**
      * Groq Function Calling Implementation
      */
-    private function processWithGroq(string $message, array $history, string $apiKey): array
+    private function processWithGroq(string $message, array $history, string $apiKey, string $role = 'student'): array
     {
         $tools = $this->getToolsDefinition();
         $messages = [
             [
                 'role' => 'system',
-                'content' => "You are CampusOS AI Agent for AUST. Current simulated date is 2026-09-04. Always use tools to query database. For vague requests ask clarification."
+                'content' => "You are CampusOS AI Agent for AUST. Current simulated date is 2026-09-04. Current role: {$role}. Always use tools to query database. For vague requests ask clarification."
             ]
         ];
         foreach ($history as $h) {
@@ -174,7 +178,7 @@ Keep your answers helpful, clear, and accurate."
                     foreach ($choice['tool_calls'] as $toolCall) {
                         $funcName = $toolCall['function']['name'];
                         $args = json_decode($toolCall['function']['arguments'], true) ?? [];
-                        $toolResult = $this->executeTool($funcName, $args);
+                        $toolResult = $this->executeTool($funcName, $args, $role);
                         $executedActions[] = [
                             'tool' => $funcName,
                             'args' => $args,
@@ -215,28 +219,34 @@ Keep your answers helpful, clear, and accurate."
             Log::error('Groq Error: ' . $e->getMessage());
         }
 
-        return $this->processWithLocalEngine($message);
+        return $this->processWithLocalEngine($message, $role);
     }
 
     /**
      * Gemini Implementation
      */
-    private function processWithGemini(string $message, array $history, string $apiKey): array
+    private function processWithGemini(string $message, array $history, string $apiKey, string $role = 'student'): array
     {
-        // Fallback to local engine for reliable function handling or local query resolution
-        return $this->processWithLocalEngine($message);
+        return $this->processWithLocalEngine($message, $role);
     }
 
     /**
-     * Deterministic and robust Natural Language Query Engine reading live SQLite database state
+     * Deterministic and robust Natural Language Query Engine reading live MySQL/DB state
      */
-    public function processWithLocalEngine(string $message): array
+    public function processWithLocalEngine(string $message, string $role = 'student'): array
     {
         $lower = strtolower(trim($message));
         $actions = [];
 
         // 1. Vague room booking check
         if ((str_contains($lower, 'book me any room') || str_contains($lower, 'book a room for me') || str_contains($lower, 'just book')) && !preg_match('/\b7[a-c]\d{2}\b/i', $lower) && !preg_match('/\b\d{1,2}(:\d{2})?\s*(am|pm)?\s*(to|-)\s*\d{1,2}(:\d{2})?\s*(am|pm)?\b/i', $lower)) {
+            if ($role !== 'admin') {
+                return [
+                    'response' => "Room booking is restricted to university administrators. As a student, you can view room schedules and find available rooms, but bookings must be managed by an administrator.",
+                    'actions' => [],
+                    'source' => 'live_agent',
+                ];
+            }
             return [
                 'response' => "To book a room for you, please specify the exact room number (e.g. 7A02, 7C01), the date, start time, and end time (e.g., 'Book Room 7A02 tomorrow from 3 PM to 5 PM').",
                 'actions' => [],
@@ -244,13 +254,27 @@ Keep your answers helpful, clear, and accurate."
             ];
         }
 
-        // 2. Specific room booking action (e.g. "Book Room 7A02 tomorrow from 3 PM to 5 PM")
-        if (preg_match('/book\s+(?:room\s+)?(7[A-C]\d{2})/i', $message, $roomMatch)) {
-            $roomNum = strtoupper($roomMatch[1]);
+        // 2. Room booking action (e.g. "Book Room 7A02 tomorrow from 3 PM to 5 PM" or "Book Room 301 for me")
+        if (preg_match('/book\s+(?:room\s+)?([0-9A-Za-z]+)/i', $message, $roomMatch) || str_contains($lower, 'book room') || str_contains($lower, 'reserve room') || str_contains($lower, 'booking')) {
+            if ($role !== 'admin') {
+                return [
+                    'response' => "Room booking is restricted to university administrators. As a student, you can check room availability and schedules, but you do not have permission to book or reserve rooms.",
+                    'actions' => [],
+                    'source' => 'live_agent',
+                ];
+            }
+
+            $rawRoom = $roomMatch[1] ?? '7A02';
+            $roomNum = strtoupper($rawRoom);
             $room = Room::where('room_number', $roomNum)->first();
             if (!$room) {
+                // Also check without prefix if 301 entered
+                $room = Room::where('room_number', 'like', "%{$roomNum}%")->first();
+            }
+
+            if (!$room) {
                 return [
-                    'response' => "Room {$roomNum} does not exist in the database.",
+                    'response' => "Room {$rawRoom} does not exist in the database.",
                     'actions' => [],
                     'source' => 'live_agent',
                 ];
@@ -273,29 +297,29 @@ Keep your answers helpful, clear, and accurate."
             }
 
             $bookingRes = $this->executeTool('book_room', [
-                'room_number' => $roomNum,
-                'booked_by' => 'Student (CampusOS User)',
+                'room_number' => $room->room_number,
+                'booked_by' => 'Campus Administrator',
                 'date' => $date,
                 'start_time' => $startTime,
                 'end_time' => $endTime,
-                'purpose' => 'Study / Meeting Booking',
-            ]);
+                'purpose' => 'Administrative Reservation',
+            ], $role);
 
             $actions[] = [
                 'tool' => 'book_room',
-                'args' => ['room_number' => $roomNum, 'date' => $date, 'start_time' => $startTime, 'end_time' => $endTime],
+                'args' => ['room_number' => $room->room_number, 'date' => $date, 'start_time' => $startTime, 'end_time' => $endTime],
                 'result' => $bookingRes,
             ];
 
             if ($bookingRes['success']) {
                 return [
-                    'response' => " Successfully booked Room {$roomNum} on {$date} from {$startTime} to {$endTime}. Booking ID: {$bookingRes['booking']['booking_id']}.",
+                    'response' => " Successfully booked Room {$room->room_number} on {$date} from {$startTime} to {$endTime}. Booking ID: {$bookingRes['booking']['booking_id']}.",
                     'actions' => $actions,
                     'source' => 'live_agent',
                 ];
             } else {
                 return [
-                    'response' => " Could not book Room {$roomNum}: {$bookingRes['message']}",
+                    'response' => " Could not book Room {$room->room_number}: {$bookingRes['message']}",
                     'actions' => $actions,
                     'source' => 'live_agent',
                 ];
@@ -579,10 +603,32 @@ Keep your answers helpful, clear, and accurate."
     }
 
     /**
-     * Tool Execution Helper
+     * Tool Execution Helper with RBAC
      */
-    public function executeTool(string $toolName, array $args): array
+    public function executeTool(string $toolName, array $args, string $role = 'student'): array
     {
+        // Admin-only tools check: room booking, room mutation, event mutations, announcement mutations, assignment mutations
+        $adminTools = [
+            'book_room',
+            'cancel_room_booking',
+            'create_room',
+            'update_room',
+            'delete_room',
+            'create_event',
+            'delete_event',
+            'create_announcement',
+            'delete_announcement',
+            'create_assignment',
+            'delete_assignment',
+            'update_room_capacity'
+        ];
+        if (in_array($toolName, $adminTools) && $role !== 'admin') {
+            return [
+                'success' => false,
+                'message' => "Permission denied: Action '{$toolName}' requires 'admin' role privileges. Students cannot book rooms or manage room allocations. Current role is '{$role}'."
+            ];
+        }
+
         switch ($toolName) {
             case 'get_schedules':
                 $q = Schedule::query();
@@ -655,6 +701,41 @@ Keep your answers helpful, clear, and accurate."
 
             case 'get_assignments':
                 return ['success' => true, 'data' => Assignment::orderBy('deadline')->get()->toArray()];
+
+            case 'create_event':
+                $event = Event::create([
+                    'id' => $args['id'] ?? ('ev-' . Str::random(5)),
+                    'name' => $args['name'],
+                    'organizer' => $args['organizer'] ?? 'Campus Admin',
+                    'date' => $args['date'],
+                    'start_time' => $args['start_time'],
+                    'end_time' => $args['end_time'],
+                    'venue' => $args['venue'],
+                    'capacity' => (int)($args['capacity'] ?? 100),
+                    'registered' => 0,
+                    'status' => 'upcoming',
+                    'category' => $args['category'] ?? 'academic',
+                    'description' => $args['description'] ?? '',
+                ]);
+                return ['success' => true, 'event' => $event->toArray()];
+
+            case 'delete_event':
+                $event = Event::find($args['event_id'] ?? '') ?: Event::where('name', 'like', "%{$args['name']}%")->first();
+                if (!$event) return ['success' => false, 'message' => 'Event not found to delete'];
+                $event->delete();
+                return ['success' => true, 'message' => 'Event deleted successfully'];
+
+            case 'create_announcement':
+                $ann = Announcement::create([
+                    'id' => $args['id'] ?? ('ann-' . Str::random(5)),
+                    'title' => $args['title'],
+                    'category' => $args['category'] ?? 'General',
+                    'priority' => $args['priority'] ?? 'medium',
+                    'content' => $args['content'] ?? '',
+                    'target_audience' => $args['target_audience'] ?? 'All Students',
+                    'date' => date('Y-m-d'),
+                ]);
+                return ['success' => true, 'announcement' => $ann->toArray()];
 
             default:
                 return ['success' => false, 'message' => 'Unknown tool'];

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { agentService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   Bot, 
   Send, 
@@ -19,10 +20,12 @@ const SUGGESTIONS = [
 ];
 
 export default function Assistant() {
+  const { user } = useAuth();
+  const userName = user?.name ? user.name.split(' ')[0] : 'there';
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Hello Sakibul! I am CampusOS AI Agent. I can check live class schedules, find available rooms, execute room bookings, register you for campus events, and look up assignment deadlines from our database. How can I help you today?',
+      content: `Hello ${userName}! I am CampusOS AI Agent. I can check live class schedules, find available rooms, execute room bookings, register you for campus events, and look up assignment deadlines from our database. How can I help you today?`,
       actions: [],
       source: 'live_agent'
     }

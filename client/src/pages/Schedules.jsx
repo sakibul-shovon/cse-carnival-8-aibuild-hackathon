@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { scheduleService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   CalendarDays, 
   Plus, 
@@ -17,6 +18,7 @@ import {
 const DAYS = ['All', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
 export default function Schedules() {
+  const { isAdmin } = useAuth();
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -149,12 +151,14 @@ export default function Schedules() {
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">Timetables and room allocations synchronized with the live database.</p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20"
-        >
-          <Plus className="w-4 h-4" /> Add New Class
-        </button>
+        {isAdmin && (
+          <button
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20"
+          >
+            <Plus className="w-4 h-4" /> Add New Class
+          </button>
+        )}
       </div>
 
       {/* Filters & Search */}
@@ -220,22 +224,24 @@ export default function Schedules() {
                   <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100">
                     {sch.course}
                   </span>
-                  <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition">
-                    <button
-                      onClick={() => openEditModal(sch)}
-                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
-                      title="Edit"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(sch.id, sch.course)}
-                      className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition">
+                      <button
+                        onClick={() => openEditModal(sch)}
+                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
+                        title="Edit"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(sch.id, sch.course)}
+                        className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <h3 className="text-sm font-bold text-slate-800 line-clamp-1">{sch.title}</h3>

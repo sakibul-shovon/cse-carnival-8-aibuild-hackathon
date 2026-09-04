@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { dashboardService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   CalendarDays, 
   DoorClosed, 
@@ -8,15 +9,18 @@ import {
   Megaphone, 
   BookOpenCheck, 
   Bot, 
-  ArrowRight,
+  ArrowRight, 
   Clock, 
   MapPin, 
   User, 
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Shield,
+  GraduationCap
 } from 'lucide-react';
 
 export default function Overview() {
+  const { user, isAdmin } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -78,17 +82,24 @@ export default function Overview() {
   return (
     <div className="space-y-8">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden p-6 md:p-8 rounded-3xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 text-white shadow-lg">
+      <div className={`relative overflow-hidden p-6 md:p-8 rounded-3xl text-white shadow-lg ${
+        isAdmin 
+          ? 'bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800' 
+          : 'bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700'
+      }`}>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-white text-xs font-semibold mb-3 border border-white/20">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" /> Welcome back to CampusOS
+              {isAdmin ? <Shield className="w-3.5 h-3.5 text-amber-300" /> : <Sparkles className="w-3.5 h-3.5 text-amber-300" />}
+              {isAdmin ? 'CampusOS Administrator Hub' : 'Student Portal'}
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-              AUST Campus Intelligence Center
+              Welcome back, {user?.name || 'Student'}!
             </h1>
             <p className="text-sm text-indigo-100 mt-1 max-w-2xl font-normal leading-relaxed">
-              Real-time synchronization across schedules, room availability, campus events, and assignments powered by natural language AI.
+              {isAdmin 
+                ? 'Manage campus schedules, lab inventory, event registrations, and departmental broadcasts in real-time.' 
+                : 'Real-time synchronization across schedules, room availability, campus events, and assignments powered by natural language AI.'}
             </p>
           </div>
           <div className="flex items-center gap-3">

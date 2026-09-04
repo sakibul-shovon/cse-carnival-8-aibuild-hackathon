@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { eventService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   Sparkles, 
   Plus, 
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export default function Events() {
+  const { isAdmin } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -183,12 +185,14 @@ export default function Events() {
             Browse, create, and register for university seminars, hackathons, and activities.
           </p>
         </div>
-        <button
-          onClick={handleOpenCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20"
-        >
-          <Plus className="w-4 h-4" /> Add New Event
-        </button>
+        {isAdmin && (
+          <button
+            onClick={handleOpenCreateModal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20"
+          >
+            <Plus className="w-4 h-4" /> Add New Event
+          </button>
+        )}
       </div>
 
       {/* Search Bar */}
@@ -246,22 +250,24 @@ export default function Events() {
                     }`}>
                       {evt.status}
                     </span>
-                    <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
-                      <button
-                        onClick={() => handleOpenEditModal(evt)}
-                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
-                        title="Edit event"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(evt.id, evt.name)}
-                        className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
-                        title="Delete event"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    {isAdmin && (
+                      <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
+                        <button
+                          onClick={() => handleOpenEditModal(evt)}
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
+                          title="Edit event"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(evt.id, evt.name)}
+                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
+                          title="Delete event"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <h3 className="font-extrabold text-slate-900 text-base leading-snug group-hover:text-indigo-600 transition">

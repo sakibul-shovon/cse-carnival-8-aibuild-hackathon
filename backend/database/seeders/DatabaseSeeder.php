@@ -7,8 +7,10 @@ use App\Models\Assignment;
 use App\Models\Event;
 use App\Models\Room;
 use App\Models\Schedule;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,6 +19,25 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // 0. Seed Demo Users (Student & Admin)
+        User::updateOrCreate(
+            ['email' => 'student@campusos.com'],
+            [
+                'name' => 'Sakibul Hassan',
+                'password' => Hash::make('password'),
+                'role' => 'student',
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'admin@campusos.com'],
+            [
+                'name' => 'CampusOS Administrator',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+            ]
+        );
+
         $dataPath = base_path('../data');
 
         // Schedules

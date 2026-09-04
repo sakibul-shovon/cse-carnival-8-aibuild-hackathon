@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { announcementService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   Megaphone, 
   Plus, 
@@ -18,6 +19,7 @@ import {
 const PRIORITIES = ['All', 'high', 'medium', 'low'];
 
 export default function Announcements() {
+  const { isAdmin } = useAuth();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -144,12 +146,14 @@ export default function Announcements() {
             Department updates, emergency notices, class reschedules, and official circulars.
           </p>
         </div>
-        <button
-          onClick={handleOpenCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20"
-        >
-          <Plus className="w-4 h-4" /> Post Notice
-        </button>
+        {isAdmin && (
+          <button
+            onClick={handleOpenCreateModal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20"
+          >
+            <Plus className="w-4 h-4" /> Post Notice
+          </button>
+        )}
       </div>
 
       {/* Filters & Search */}
@@ -225,22 +229,24 @@ export default function Announcements() {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
-                  <button
-                    onClick={() => handleOpenEditModal(ann)}
-                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
-                    title="Edit notice"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(ann.id, ann.title)}
-                    className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
-                    title="Delete notice"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                {isAdmin && (
+                  <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
+                    <button
+                      onClick={() => handleOpenEditModal(ann)}
+                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
+                      title="Edit notice"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(ann.id, ann.title)}
+                      className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
+                      title="Delete notice"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div>

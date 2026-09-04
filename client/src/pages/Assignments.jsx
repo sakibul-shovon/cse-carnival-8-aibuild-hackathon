@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { assignmentService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   BookOpenCheck, 
   Plus, 
@@ -18,6 +19,7 @@ import {
 const STATUS_FILTERS = ['All', 'pending', 'submitted', 'graded', 'late'];
 
 export default function Assignments() {
+  const { isAdmin } = useAuth();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -168,12 +170,14 @@ export default function Assignments() {
             Track homework, lab reports, term papers, and submission deadlines.
           </p>
         </div>
-        <button
-          onClick={handleOpenCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20"
-        >
-          <Plus className="w-4 h-4" /> Add Assignment
-        </button>
+        {isAdmin && (
+          <button
+            onClick={handleOpenCreateModal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20"
+          >
+            <Plus className="w-4 h-4" /> Add Assignment
+          </button>
+        )}
       </div>
 
       {/* Search and Filters */}
@@ -212,30 +216,30 @@ export default function Assignments() {
 
       {/* Grid of Assignments */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pulse">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-44 bg-white rounded-2xl border border-slate-200"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-60 bg-white rounded-2xl border border-slate-200"></div>
           ))}
         </div>
       ) : assignments.length === 0 ? (
         <div className="p-12 text-center rounded-2xl bg-white border border-slate-200 shadow-xs">
           <BookOpenCheck className="w-12 h-12 text-slate-400 mx-auto mb-3" />
           <h3 className="text-base font-bold text-slate-700">No assignments found</h3>
-          <p className="text-xs text-slate-500 mt-1">Great job! You have no pending submissions matching this filter.</p>
+          <p className="text-xs text-slate-500 mt-1">Try switching filters or add a new assignment.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {assignments.map((asgn) => {
             const isDone = asgn.status === 'submitted' || asgn.status === 'graded';
             return (
               <div
                 key={asgn.id}
-                className="flex flex-col justify-between p-5 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 transition shadow-xs hover:shadow-md space-y-3 group"
+                className="flex flex-col justify-between p-5 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 transition shadow-xs hover:shadow-md group"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg">
+                      <span className="px-2.5 py-1 text-xs font-extrabold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
                         {asgn.course}
                       </span>
                       <span className={`px-2.5 py-1 text-xs font-extrabold rounded-full border ${
@@ -251,22 +255,24 @@ export default function Assignments() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
-                      <button
-                        onClick={() => handleOpenEditModal(asgn)}
-                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
-                        title="Edit assignment"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(asgn.id, asgn.title)}
-                        className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
-                        title="Delete assignment"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    {isAdmin && (
+                      <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
+                        <button
+                          onClick={() => handleOpenEditModal(asgn)}
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
+                          title="Edit assignment"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(asgn.id, asgn.title)}
+                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
+                          title="Delete assignment"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <h3 className="text-base font-extrabold text-slate-900 group-hover:text-indigo-600 transition">
