@@ -12,8 +12,7 @@ import {
   AlertCircle,
   X,
   Check,
-  Filter,
-  ExternalLink
+  Filter
 } from 'lucide-react';
 
 const STATUS_FILTERS = ['All', 'pending', 'submitted', 'graded', 'late'];
@@ -151,36 +150,34 @@ export default function Assignments() {
     <div className="space-y-6">
       {/* Toast */}
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border backdrop-blur-md transition-all animate-bounce ${
-          toast.type === 'error' 
-            ? 'bg-rose-950/90 border-rose-700 text-rose-200' 
-            : 'bg-emerald-950/90 border-emerald-700 text-emerald-200'
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-xl text-sm font-semibold text-white ${
+          toast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'
         }`}>
-          {toast.type === 'error' ? <AlertCircle className="w-5 h-5 text-rose-400" /> : <Check className="w-5 h-5 text-emerald-400" />}
-          <span className="text-sm font-medium">{toast.message}</span>
+          {toast.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+          <span>{toast.message}</span>
         </div>
       )}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <BookOpenCheck className="w-6 h-6 text-indigo-400" /> Course Assignments & Submissions
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <BookOpenCheck className="w-6 h-6 text-amber-600" /> Course Assignments & Submissions
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 mt-0.5">
             Track homework, lab reports, term papers, and submission deadlines.
           </p>
         </div>
         <button
           onClick={handleOpenCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition shadow-lg shadow-indigo-600/30"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20"
         >
           <Plus className="w-4 h-4" /> Add Assignment
         </button>
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
         <div className="relative flex-1 w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -189,22 +186,22 @@ export default function Assignments() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && fetchAssignments()}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500"
           />
         </div>
 
         <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
-          <span className="text-xs text-slate-400 flex items-center gap-1 pl-1">
-            <Filter className="w-3.5 h-3.5" /> Status:
+          <span className="text-xs text-slate-500 font-medium flex items-center gap-1 pl-1">
+            <Filter className="w-3.5 h-3.5 text-slate-400" /> Status:
           </span>
           {STATUS_FILTERS.map((s) => (
             <button
               key={s}
               onClick={() => setSelectedStatus(s)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium capitalize transition shrink-0 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition shrink-0 ${
                 selectedStatus === s
-                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                  : 'bg-slate-950 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-slate-200'
+                  ? 'bg-indigo-600 text-white shadow-2xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
               }`}
             >
               {s}
@@ -217,13 +214,13 @@ export default function Assignments() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pulse">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-44 bg-slate-900 rounded-2xl border border-slate-800"></div>
+            <div key={i} className="h-44 bg-white rounded-2xl border border-slate-200"></div>
           ))}
         </div>
       ) : assignments.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-slate-800">
-          <BookOpenCheck className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <h3 className="text-base font-semibold text-slate-300">No assignments found</h3>
+        <div className="p-12 text-center rounded-2xl bg-white border border-slate-200 shadow-xs">
+          <BookOpenCheck className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-slate-700">No assignments found</h3>
           <p className="text-xs text-slate-500 mt-1">Great job! You have no pending submissions matching this filter.</p>
         </div>
       ) : (
@@ -233,22 +230,22 @@ export default function Assignments() {
             return (
               <div
                 key={asgn.id}
-                className="flex flex-col justify-between p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 hover:border-slate-700 transition shadow-sm space-y-3 group"
+                className="flex flex-col justify-between p-5 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 transition shadow-xs hover:shadow-md space-y-3 group"
               >
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg">
+                      <span className="px-2.5 py-1 text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg">
                         {asgn.course}
                       </span>
-                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${
+                      <span className={`px-2.5 py-1 text-xs font-extrabold rounded-full border ${
                         asgn.status === 'submitted'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                           : asgn.status === 'graded'
-                          ? 'bg-violet-500/10 text-violet-400 border-violet-500/20'
+                          ? 'bg-violet-50 text-violet-700 border-violet-100'
                           : asgn.status === 'late'
-                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          ? 'bg-rose-50 text-rose-700 border-rose-100'
+                          : 'bg-amber-50 text-amber-700 border-amber-100'
                       }`}>
                         {asgn.status}
                       </span>
@@ -257,14 +254,14 @@ export default function Assignments() {
                     <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
                       <button
                         onClick={() => handleOpenEditModal(asgn)}
-                        className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition"
+                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
                         title="Edit assignment"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(asgn.id, asgn.title)}
-                        className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 transition"
+                        className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
                         title="Delete assignment"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -272,40 +269,40 @@ export default function Assignments() {
                     </div>
                   </div>
 
-                  <h3 className="text-base font-bold text-white group-hover:text-indigo-300 transition">
+                  <h3 className="text-base font-extrabold text-slate-900 group-hover:text-indigo-600 transition">
                     {asgn.title}
                   </h3>
-                  <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
                     {asgn.description}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-slate-800/60 space-y-3">
-                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
+                <div className="pt-3 border-t border-slate-100 space-y-3">
+                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 font-medium">
                     <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="truncate">Due: <strong>{asgn.deadline}</strong></span>
+                      <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span className="truncate">Due: <strong className="text-slate-800">{asgn.deadline}</strong></span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span className="truncate">Assigned: {asgn.assigned_date}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-slate-400 font-medium">Platform:</span>
-                      <span className="truncate text-slate-200">{asgn.submission_platform}</span>
+                      <span className="text-slate-400">Platform:</span>
+                      <span className="truncate text-slate-800 font-semibold">{asgn.submission_platform}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-slate-400 font-medium">Weight:</span>
-                      <span className="truncate text-indigo-300 font-semibold">{asgn.marks} Marks</span>
+                      <span className="text-slate-400">Weight:</span>
+                      <span className="truncate text-indigo-700 font-bold">{asgn.marks} Marks</span>
                     </div>
                   </div>
 
                   <button
                     onClick={() => handleToggleStatus(asgn)}
-                    className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold transition ${
+                    className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition ${
                       isDone
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'
-                        : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
                     }`}
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -320,15 +317,15 @@ export default function Assignments() {
 
       {/* Create / Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900">
                 {editingAsgn ? 'Edit Assignment' : 'Add New Assignment'}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -337,83 +334,83 @@ export default function Assignments() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Course Code</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Course Code</label>
                   <input
                     type="text"
                     required
                     value={formData.course}
                     onChange={(e) => setFormData({ ...formData, course: e.target.value })}
                     placeholder="e.g. CSE 4113"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Course Title</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Course Title</label>
                   <input
                     type="text"
                     required
                     value={formData.course_title}
                     onChange={(e) => setFormData({ ...formData, course_title: e.target.value })}
                     placeholder="e.g. Pattern Recognition"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Assignment Title</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Assignment Title</label>
                 <input
                   type="text"
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g. Assignment 1: Naive Bayes Implementation"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Description / Instructions</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Description / Instructions</label>
                 <textarea
                   required
                   rows={3}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Submission requirements and details..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Assigned Date</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Assigned Date</label>
                   <input
                     type="date"
                     required
                     value={formData.assigned_date}
                     onChange={(e) => setFormData({ ...formData, assigned_date: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Deadline Date</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Deadline Date</label>
                   <input
                     type="date"
                     required
                     value={formData.deadline}
                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-1">
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Status</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Status</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                   >
                     <option value="pending">Pending</option>
                     <option value="submitted">Submitted</option>
@@ -422,41 +419,41 @@ export default function Assignments() {
                   </select>
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Marks</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Marks</label>
                   <input
                     type="number"
                     min="0"
                     required
                     value={formData.marks}
                     onChange={(e) => setFormData({ ...formData, marks: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Platform</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Platform</label>
                   <input
                     type="text"
                     required
                     value={formData.submission_platform}
                     onChange={(e) => setFormData({ ...formData, submission_platform: e.target.value })}
                     placeholder="e.g. Google Classroom"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition shadow-lg shadow-indigo-600/30"
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-xs"
                 >
                   {submitting ? 'Saving...' : editingAsgn ? 'Update Assignment' : 'Add Assignment'}
                 </button>
