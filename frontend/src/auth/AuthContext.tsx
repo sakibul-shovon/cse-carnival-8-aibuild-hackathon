@@ -1,0 +1,12 @@
+import { createContext, useContext, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+
+export type User = { id: string; name: string; email: string; student_id?: string | null; role: 'student' | 'admin' }
+type AuthContextValue = { user: User | null; loading: boolean; signIn: (identifier: string, password: string, role: User['role']) => Promise<void>; signOut: () => void; register: (values: { name: string; email: string; student_id: string; password: string }) => Promise<void> }
+const AuthContext = createContext<AuthContextValue | null>(null)
+const apiUrl = 'http://localhost:4000'
+
+async function request<T>(path: string, options: RequestInit) { const response = await fetch(`${apiUrl}${path}`, options); const payload = await response.json() as { success: boolean; data?: T; error?: string }; if (!response.ok || !payload.success) throw new Error(payload.error ?? 'Backend connection failed'); return payload.data as T }
+
+export function AuthProvider({ children }: { children: ReactNode }) { const [user,setUser]=useState<User|null>(null); const [loading,setLoading]=useState(true); useEffect(()=>{const token=localStorage.getItem('campusos-token');if(!token){setLoading(false);return} request<{user:User}>('/api/auth/me',{headers:{Authorization:`Bearer ${token}`}}).then((data)=>setUser(data.user)).catch(()=>localStorage.removeItem('campusos-token')).finally(()=>setLoading(false))},[]); const signIn=async(identifier:string,password:string,role:User['role'])=>{const data=await request<{token:string;user:User}>('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifier,password,role})});localStorage.setItem('campusos-token',data.token);setUser(data.user)}; const register=async(values:{name:string;email:string;student_id:string;password:string})=>{const data=await request<{token:string;user:User}>('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(values)});localStorage.setItem('campusos-token',data.token);setUser(data.user)}; const signOut=()=>{localStorage.removeItem('campusos-token');setUser(null)}; return <AuthContext.Provider value={{user,loading,signIn,signOut,register}}>{children}</AuthContext.Provider> }
+export function useAuth() { const context=useContext(AuthContext); if(!context) throw new Error('useAuth must be used inside AuthProvider'); return context }
