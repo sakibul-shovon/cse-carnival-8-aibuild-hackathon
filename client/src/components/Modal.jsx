@@ -16,23 +16,25 @@ export default function Modal({ isOpen, onClose, title, subtitle, children, maxW
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-slate-950/60 dark:bg-black/80 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal Dialog */}
       <div
-        className={`relative w-full ${maxWidth} glass-modal rounded-2xl p-6 sm:p-8 shadow-2xl border border-slate-700/60 z-10 text-slate-100 max-h-[90vh] flex flex-col`}
+        className={`relative w-full ${maxWidth} glass-modal rounded-2xl p-6 sm:p-8 shadow-2xl z-10 text-black dark:text-emerald-50 max-h-[90vh] flex flex-col transition-colors duration-300`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-slate-800">
+        <div className="flex items-start justify-between pb-4 border-b border-emerald-100 dark:border-emerald-800/60">
           <div>
-            <h3 className="text-xl font-bold text-white tracking-tight">{title}</h3>
-            {subtitle && <p className="text-sm text-slate-400 mt-1">{subtitle}</p>}
+            <h3 className="text-xl font-extrabold text-black dark:text-white tracking-tight">
+              {title}
+            </h3>
+            {subtitle && <p className="text-sm text-black/75 dark:text-emerald-400/80 font-medium mt-1">{subtitle}</p>}
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition"
+            className="p-1.5 rounded-lg text-black hover:text-black dark:text-emerald-300 dark:hover:text-white hover:bg-emerald-50 dark:hover:bg-emerald-900/50 transition"
           >
             <X className="w-5 h-5" />
           </button>
