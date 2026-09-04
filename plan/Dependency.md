@@ -33,13 +33,13 @@ We have ~3 hours. Speed over cleanliness. Rules:
 ## ⏱️ 0:15–1:15 — Hour 1: Get Something Real Working, In Parallel
 
 ### Member 2 (Backend) — the critical path, do these in order
-- [ ] **[B-1]** Supabase tables for all 5 resources (skip constraints/checks if short on time, just get columns right) — *Member 2* `[Unblocks: B-2]`
-- [ ] **[B-2]** Seed script, run once against `data/*.json` — *Member 2* `[Unblocks: B-3]`
-- [ ] **[B-3]** `GET` for all 5 resources — *Member 2* `[Unblocks: F-2, G-2, B-4]` — **ship this ASAP, it unblocks both teammates**
-- [ ] **[B-4]** `POST/PUT/DELETE` for all 5 resources (minimal validation) — *Member 2* `[Unblocks: F-3]`
-- [ ] **[B-5]** `GET /api/meta/now` — one-liner, returns server time — *Member 2* `[Unblocks: G-3]`
-- [ ] **[B-6]** Room booking conflict check (409 on overlap) — *Member 2* `[Unblocks: F-4, G-5]` **← start this the moment B-4 is done, it's the biggest blocker for both other members**
-- [ ] **[B-7]** Event capacity check (409 when full) — *Member 2* `[Unblocks: F-5, G-6]`
+- [x] ~~**[B-1]** Supabase tables for all 5 resources (skip constraints/checks if short on time, just get columns right) — *Member 2* `[Unblocks: B-2]`~~
+- [x] ~~**[B-2]** Seed script, run once against `data/*.json` — *Member 2* `[Unblocks: B-3]`~~
+- [x] ~~**[B-3]** `GET` for all 5 resources — *Member 2* `[Unblocks: F-2, G-2, B-4]` — **ship this ASAP, it unblocks both teammates**~~
+- [x] ~~**[B-4]** `POST/PUT/DELETE` for all 5 resources (minimal validation) — *Member 2* `[Unblocks: F-3]`~~
+- [x] ~~**[B-5]** `GET /api/meta/now` — one-liner, returns server time — *Member 2* `[Unblocks: G-3]`~~
+- [x] ~~**[B-6]** Room booking conflict check (409 on overlap) — *Member 2* `[Unblocks: F-4, G-5]` **← start this the moment B-4 is done, it's the biggest blocker for both other members**~~
+- [x] ~~**[B-7]** Event capacity check (409 when full) — *Member 2* `[Unblocks: F-5, G-6]`~~
 
 ### Member 1 (Frontend) — build against mock, swap to real the moment B-3 lands
 - [x] ~~**[F-1]** Scaffold client, `api/client.js` against the mock shape from X-2 — *Member 1* `[Unblocks: F-2]`~~
@@ -57,8 +57,8 @@ We have ~3 hours. Speed over cleanliness. Rules:
 ## ⏱️ 1:15–2:15 — Hour 2: Actions, Booking, and the Agent's Judgment Calls
 
 ### Member 2
-- [ ] **[B-8]** If B-6/B-7 aren't done yet, finish them now — everything else is waiting on this.
-- [ ] **[B-9]** Room search filters (`min_capacity`, `equipment`, date/time free-check) — *Member 2* `[Unblocks: F-4, G-4]`
+- [x] ~~**[B-8]** If B-6/B-7 aren't done yet, finish them now — everything else is waiting on this.~~
+- [x] ~~**[B-9]** Room search filters (`min_capacity`, `equipment`, date/time free-check) — *Member 2* `[Unblocks: F-4, G-4]`~~
 
 ### Member 1
 - [x] ~~**[F-4]** Book/cancel-booking UI, surface the 409 conflict message — *Member 1* `[Blocked by: B-6, B-9]`~~
