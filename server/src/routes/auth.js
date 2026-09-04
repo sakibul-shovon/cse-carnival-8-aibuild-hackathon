@@ -39,6 +39,28 @@ export async function requireAuth(req, res, next) {
   }
 }
 
+export function validatePasswordStrength(password) {
+  if (!password || typeof password !== 'string') {
+    return { valid: false, message: 'Password is required' };
+  }
+  if (password.length < 8) {
+    return { valid: false, message: 'Password must be at least 8 characters long' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one uppercase letter (A-Z)' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one lowercase letter (a-z)' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one number (0-9)' };
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one special character (!@#$%^&* etc.)' };
+  }
+  return { valid: true };
+}
+
 // POST /api/auth/register - Register a new student/faculty/club account
 router.post('/register', async (req, res, next) => {
   try {
@@ -52,8 +74,12 @@ router.post('/register', async (req, res, next) => {
       return res.status(400).json({ error: 'validation_error', message: 'Valid university email is required' });
     }
 
-    if (!password || typeof password !== 'string' || password.length < 6) {
-      return res.status(400).json({ error: 'validation_error', message: 'Password must be at least 6 characters' });
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({
+        error: 'weak_password',
+        message: passwordValidation.message
+      });
     }
 
     const trimmedEmail = email.trim().toLowerCase();

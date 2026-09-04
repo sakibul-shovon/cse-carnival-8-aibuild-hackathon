@@ -160,6 +160,16 @@ async function runTests() {
     assert(assignments.status === 200 && Array.isArray(assignments.data), `GET /api/assignments returns array (${assignments.data.length} assignments)`);
 
     // 8. Authentication & Database User Tests
+    const weakRegRes = await request('/auth/register', {
+      method: 'POST',
+      body: {
+        name: 'Weak Pass Test',
+        email: 'weak.pass@aust.edu',
+        password: 'password123'
+      }
+    });
+    assert(weakRegRes.status === 400 && weakRegRes.data.error === 'weak_password', 'POST /api/auth/register rejects weak password with 400 (requires 8+ chars, upper, lower, number, special)');
+
     const testRegEmail = `test.student.${Date.now()}@aust.edu`;
     const regRes = await request('/auth/register', {
       method: 'POST',
@@ -169,17 +179,17 @@ async function runTests() {
         student_id: `22-${Math.floor(10000 + Math.random() * 90000)}`,
         department: 'Computer Science & Engineering',
         role: 'Student',
-        password: 'password123'
+        password: 'Password123!'
       }
     });
-    assert(regRes.status === 201 && regRes.data.token && regRes.data.user.email === testRegEmail, 'POST /api/auth/register creates user and returns token');
+    assert(regRes.status === 201 && regRes.data.token && regRes.data.user.email === testRegEmail, 'POST /api/auth/register creates user with strong password and returns token');
 
     const dupRegRes = await request('/auth/register', {
       method: 'POST',
       body: {
         name: 'Duplicate Test',
         email: testRegEmail,
-        password: 'password123'
+        password: 'Password123!'
       }
     });
     assert(dupRegRes.status === 409, 'POST /api/auth/register rejects duplicate email with 409');
