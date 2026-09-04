@@ -1,6 +1,6 @@
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
 import Modal from './Modal';
+import { AlertTriangle } from 'lucide-react';
 
 export default function ConfirmDialog({
   isOpen,
@@ -9,34 +9,45 @@ export default function ConfirmDialog({
   title = 'Confirm Action',
   message = 'Are you sure you want to proceed?',
   confirmText = 'Delete',
+  cancelText = 'Cancel',
   isDestructive = true,
   isLoading = false,
 }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} maxWidth="max-w-md">
-      <div className="space-y-4">
-        <div className="flex items-start gap-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300">
-          <AlertTriangle className="w-5 h-5 flex-shrink-0 text-rose-400 mt-0.5" />
-          <p className="text-sm text-slate-200">{message}</p>
+      <div className="space-y-4 pt-2">
+        <div className="flex items-start gap-3">
+          <div
+            className={`p-2.5 rounded-xl shrink-0 ${
+              isDestructive
+                ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20'
+                : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
+            }`}
+          >
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <p className="text-sm text-black dark:text-emerald-200/90 leading-relaxed font-semibold mt-1">
+            {message}
+          </p>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-emerald-100 dark:border-emerald-800/60">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition"
+            className="px-4 py-2 rounded-xl text-sm font-bold text-black dark:text-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 transition"
           >
-            Cancel
+            {cancelText}
           </button>
           <button
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-lg transition ${
+            className={`px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md transition-all hover:scale-[1.02] ${
               isDestructive
-                ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/25'
-                : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/25'
+                ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'
+                : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
             }`}
           >
             {isLoading ? 'Processing...' : confirmText}

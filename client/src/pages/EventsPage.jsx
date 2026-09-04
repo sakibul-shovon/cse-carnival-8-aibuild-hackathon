@@ -12,11 +12,7 @@ import {
   MapPin,
   Calendar,
   Clock,
-  Award,
-  Sparkles,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
+  X,
 } from 'lucide-react';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -40,7 +36,7 @@ export default function EventsPage() {
 
   // Registration Modal
   const [registeringEvent, setRegisteringEvent] = useState(null);
-  const [cancellingReg, setCancellingReg] = useState(null); // { eventId, studentId, studentName }
+  const [cancellingReg, setCancellingReg] = useState(null);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -80,8 +76,8 @@ export default function EventsPage() {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       addToast({
         type: 'success',
-        title: editingEvent ? 'Event Updated' : 'Event Created',
-        message: `Event '${formData.name}' saved successfully.`,
+        title: editingEvent ? 'Event Updated' : 'Event Published',
+        message: `Event '${formData.name}' successfully saved.`,
       });
       closeForm();
     },
@@ -89,22 +85,20 @@ export default function EventsPage() {
       addToast({
         type: 'error',
         title: 'Save Failed',
-        message: err.message || 'Could not save event.',
+        message: err.message || 'Failed to save event.',
       });
     },
   });
 
   // Delete Event Mutation
   const deleteMutation = useMutation({
-    mutationFn: async (id) => {
-      return await api.deleteEvent(id);
-    },
+    mutationFn: (id) => api.deleteEvent(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       addToast({
-        type: 'info',
+        type: 'success',
         title: 'Event Deleted',
-        message: 'Event and registrations removed.',
+        message: 'Event permanently removed from database.',
       });
       setDeletingId(null);
     },
@@ -112,53 +106,49 @@ export default function EventsPage() {
       addToast({
         type: 'error',
         title: 'Delete Failed',
-        message: err.message || 'Could not delete event.',
+        message: err.message || 'Failed to delete event.',
       });
     },
   });
 
   // Register Student Mutation
   const registerMutation = useMutation({
-    mutationFn: async ({ eventId, data }) => {
-      return await api.registerEvent(eventId, data);
-    },
-    onSuccess: (res) => {
+    mutationFn: ({ eventId, registration }) => api.registerForEvent(eventId, registration),
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       addToast({
         type: 'success',
-        title: 'Registration Confirmed',
-        message: `Registered ${studentData.name} (${studentData.student_id}) successfully.`,
+        title: 'Registered Successfully',
+        message: data.message || `Student ${studentData.name} registered.`,
       });
       setRegisteringEvent(null);
     },
     onError: (err) => {
       addToast({
         type: 'error',
-        title: 'Registration Blocked',
-        message: err.message || 'Capacity limit reached or student already registered.',
+        title: 'Registration Rejected (409)',
+        message: err.message || 'Event has reached full capacity or student is already registered.',
       });
     },
   });
 
   // Cancel Registration Mutation
   const cancelRegMutation = useMutation({
-    mutationFn: async ({ eventId, studentId }) => {
-      return await api.cancelRegistration(eventId, studentId);
-    },
+    mutationFn: ({ eventId, studentId }) => api.cancelEventRegistration(eventId, studentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       addToast({
-        type: 'info',
+        type: 'success',
         title: 'Registration Cancelled',
-        message: 'Student removed from attendee list.',
+        message: 'Student registration removed and seat released.',
       });
       setCancellingReg(null);
     },
     onError: (err) => {
       addToast({
         type: 'error',
-        title: 'Cancellation Error',
-        message: err.message || 'Could not cancel registration.',
+        title: 'Cancellation Failed',
+        message: err.message || 'Failed to cancel registration.',
       });
     },
   });
@@ -173,7 +163,7 @@ export default function EventsPage() {
       end_time: '13:00',
       end_date: new Date().toISOString().split('T')[0],
       venue: '7C01',
-      organizer: 'AUSTPIC',
+      organizer: 'AUST CSE Society',
       capacity: 60,
       status: 'upcoming',
     });
@@ -185,10 +175,10 @@ export default function EventsPage() {
     setFormData({
       name: evt.name || '',
       description: evt.description || '',
-      date: evt.date || new Date().toISOString().split('T')[0],
+      date: evt.date || '',
       start_time: evt.start_time || '10:00',
       end_time: evt.end_time || '13:00',
-      end_date: evt.end_date || evt.date || new Date().toISOString().split('T')[0],
+      end_date: evt.end_date || evt.date,
       venue: evt.venue || '7C01',
       organizer: evt.organizer || '',
       capacity: evt.capacity || 60,
@@ -202,10 +192,15 @@ export default function EventsPage() {
     setEditingEvent(null);
   };
 
+  const openRegisterModal = (evt) => {
+    setRegisteringEvent(evt);
+    setStudentData({ student_id: '', name: '' });
+  };
+
   const handleEventSubmit = (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.venue.trim()) {
-      addToast({ type: 'error', title: 'Validation Error', message: 'Name and venue are required.' });
+    if (!formData.name.trim() || !formData.date || !formData.venue.trim()) {
+      addToast({ type: 'error', title: 'Validation Error', message: 'Name, date, and venue are required.' });
       return;
     }
     saveMutation.mutate(formData);
@@ -214,10 +209,13 @@ export default function EventsPage() {
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
     if (!studentData.student_id.trim() || !studentData.name.trim()) {
-      addToast({ type: 'error', title: 'Validation Error', message: 'Student ID and full name are required.' });
+      addToast({ type: 'error', title: 'Validation Error', message: 'Student ID and name are required.' });
       return;
     }
-    registerMutation.mutate({ eventId: registeringEvent.id, data: studentData });
+    registerMutation.mutate({
+      eventId: registeringEvent.id,
+      registration: studentData,
+    });
   };
 
   // Filtered events
@@ -227,33 +225,33 @@ export default function EventsPage() {
     const matchesSearch =
       !search ||
       evt.name?.toLowerCase().includes(query) ||
-      evt.description?.toLowerCase().includes(query) ||
+      evt.venue?.toLowerCase().includes(query) ||
       evt.organizer?.toLowerCase().includes(query) ||
-      evt.venue?.toLowerCase().includes(query);
+      evt.description?.toLowerCase().includes(query);
     return matchesStatus && matchesSearch;
   });
 
   return (
-    <div className="p-5 sm:p-8 space-y-6 max-w-7xl mx-auto w-full">
-      {/* Header */}
+    <div className="p-5 sm:p-8 space-y-6 max-w-7xl mx-auto w-full bg-white dark:bg-transparent">
+      {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-sm">
               <PartyPopper className="w-5 h-5" />
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Campus Events & Hackathons
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-black dark:text-white tracking-tight">
+              Campus Events & Workshops
             </h1>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
-            Browse guest lectures, workshops, club sessions, and manage attendee registrations with strict capacity limits.
+          <p className="text-sm text-black dark:text-emerald-300/80 font-medium mt-1">
+            Browse upcoming club events, hackathons, and guest seminars with real-time capacity management.
           </p>
         </div>
 
         <button
           onClick={openAddForm}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/20 transition-all hover:scale-[1.02]"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.02]"
         >
           <Plus className="w-4 h-4" />
           Create Event
@@ -262,156 +260,160 @@ export default function EventsPage() {
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-        {/* Status selector */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 overflow-x-auto">
-          {EVENT_STATUSES.map((status) => {
-            const count = status === 'all' ? events.length : events.filter((e) => e.status === status).length;
+        {/* Status Filter Pills */}
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-900/40 overflow-x-auto shadow-sm">
+          {EVENT_STATUSES.map((st) => {
+            const count = st === 'all' ? events.length : events.filter((e) => e.status === st).length;
             return (
               <button
-                key={status}
-                onClick={() => setSelectedStatus(status)}
+                key={st}
+                onClick={() => setSelectedStatus(st)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize whitespace-nowrap transition ${
-                  selectedStatus === status ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  selectedStatus === st
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-black dark:text-emerald-200 hover:text-black dark:hover:text-white hover:bg-emerald-50 dark:hover:bg-emerald-900/30'
                 }`}
               >
-                {status} <span className="opacity-60 text-[10px]">({count})</span>
+                {st} <span className="opacity-80 text-[10px] font-bold">({count})</span>
               </button>
             );
           })}
         </div>
 
-        {/* Search */}
+        {/* Search Input */}
         <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-emerald-700 dark:text-emerald-400/60 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search event name, speaker, venue..."
+            placeholder="Search event, venue, organizer..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800/60 text-sm font-semibold text-black dark:text-emerald-50 placeholder-black/50 dark:placeholder-emerald-500/60 focus:outline-none focus:border-emerald-500 shadow-sm"
           />
         </div>
       </div>
 
-      {/* Events Grid */}
+      {/* Main Grid */}
       {isLoading ? (
         <div className="py-20 flex flex-col items-center justify-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"></div>
-          <p className="text-sm text-slate-400">Loading events from database...</p>
+          <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin"></div>
+          <p className="text-sm font-semibold text-black dark:text-emerald-400">Loading campus events from database...</p>
         </div>
       ) : isError ? (
-        <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center text-rose-300">
-          Failed to load events.
+        <div className="p-6 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-center text-rose-800 dark:text-rose-300 font-medium">
+          Failed to load events. Please verify backend connection.
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No events found"
-          description="Try selecting a different status filter or create a new event."
+          description="No campus events match your current filter selection."
           actionText="Create Event"
           onAction={openAddForm}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((evt) => {
             const isFull = evt.registered >= evt.capacity || evt.status === 'full';
-            const registrations = evt.registrations || [];
-            const percentFilled = Math.min(100, Math.round(((evt.registered || 0) / (evt.capacity || 1)) * 100));
+            const percentFilled = Math.min(100, Math.round((evt.registered / evt.capacity) * 100));
 
             return (
               <div
                 key={evt.id}
-                className="glass-card glass-card-hover rounded-2xl p-6 flex flex-col justify-between border border-slate-800/80"
+                className="glass-card glass-card-hover rounded-2xl p-5 flex flex-col justify-between relative group"
               >
-                <div className="space-y-4">
-                  {/* Top tags */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                        {evt.organizer || 'AUST'}
-                      </span>
-                      <h3 className="text-lg font-extrabold text-white mt-2 leading-snug">
-                        {evt.name}
-                      </h3>
-                    </div>
+                <div>
+                  {/* Top Meta & Status */}
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 dark:bg-emerald-900/40 text-black dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700/40">
+                      {evt.organizer || 'Campus Club'}
+                    </span>
                     <StatusBadge status={evt.status} />
                   </div>
 
-                  <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                    {evt.description}
+                  <h3 className="font-extrabold text-black dark:text-white text-base leading-snug line-clamp-2 mb-2">
+                    {evt.name}
+                  </h3>
+
+                  <p className="text-xs text-black dark:text-emerald-100/80 line-clamp-2 mb-4 leading-relaxed font-semibold">
+                    {evt.description || 'No description provided.'}
                   </p>
 
-                  {/* Date, Time, Venue */}
-                  <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300">
+                  {/* Event Timing & Venue */}
+                  <div className="space-y-2 text-xs text-black dark:text-emerald-100 font-semibold mb-4">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>{evt.date}</span>
+                      <Calendar className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                      <span className="font-mono">
+                        {evt.date} {evt.end_date && evt.end_date !== evt.date ? `to ${evt.end_date}` : ''}
+                      </span>
                     </div>
+
                     <div className="flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5 text-amber-400" />
-                      <span className="font-mono">{evt.start_time} – {evt.end_time}</span>
+                      <Clock className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                      <span className="font-mono">
+                        {evt.start_time} – {evt.end_time}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 col-span-2">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Venue: <strong className="text-white font-semibold">{evt.venue}</strong></span>
+
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400" />
+                      <span>Venue: <strong className="text-black dark:text-white font-extrabold">{evt.venue}</strong></span>
                     </div>
                   </div>
 
                   {/* Capacity Progress Bar */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-400 font-medium flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-indigo-400" />
+                  <div className="p-3 rounded-xl bg-white dark:bg-[#161616] border border-emerald-100 dark:border-emerald-900/40 mb-3">
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span className="font-bold text-black dark:text-emerald-200 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                         Registrations
                       </span>
-                      <span className="font-bold text-white">
-                        {evt.registered} / {evt.capacity}{' '}
-                        <span className={`text-[11px] font-semibold ${isFull ? 'text-rose-400' : 'text-emerald-400'}`}>
-                          ({percentFilled}%)
-                        </span>
+                      <span className="font-mono font-extrabold text-black dark:text-emerald-300">
+                        {evt.registered} / {evt.capacity} ({percentFilled}%)
                       </span>
                     </div>
-                    <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-2 bg-emerald-200/60 dark:bg-emerald-900/60 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${
                           isFull
                             ? 'bg-rose-500'
                             : percentFilled > 80
                             ? 'bg-amber-500'
-                            : 'bg-gradient-to-r from-indigo-500 to-emerald-400'
+                            : 'bg-emerald-600 dark:bg-emerald-400'
                         }`}
                         style={{ width: `${percentFilled}%` }}
                       />
                     </div>
                   </div>
 
-                  {/* Registered Attendees Drawer */}
-                  {registrations.length > 0 && (
-                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                        <span>Registered Students ({registrations.length})</span>
+                  {/* Registered Students Accordion List */}
+                  {evt.registrations && evt.registrations.length > 0 && (
+                    <div className="border-t border-emerald-100 dark:border-emerald-900/30 pt-2.5">
+                      <span className="text-[11px] font-bold text-black dark:text-emerald-300 uppercase tracking-wider block mb-1.5">
+                        Attendee Roster ({evt.registrations.length})
                       </span>
-                      <div className="space-y-1 max-h-28 overflow-y-auto pr-1">
-                        {registrations.map((reg) => (
+                      <div className="space-y-1 max-h-24 overflow-y-auto pr-1">
+                        {evt.registrations.map((r) => (
                           <div
-                            key={reg.student_id}
-                            className="flex items-center justify-between p-1.5 rounded-lg bg-slate-950/80 border border-slate-800/60 text-[11px]"
+                            key={r.student_id}
+                            className="flex items-center justify-between px-2 py-1 rounded-lg bg-white dark:bg-[#161616] border border-emerald-100 dark:border-emerald-800/60 text-[11px]"
                           >
-                            <div className="flex items-center gap-2 truncate">
-                              <span className="font-mono text-indigo-300 font-medium">{reg.student_id}</span>
-                              <span className="text-slate-200 truncate">{reg.name}</span>
-                            </div>
+                            <span className="font-bold text-black dark:text-white truncate">
+                              {r.name} <span className="text-black/80 dark:text-emerald-400/80 font-mono text-[10px]">({r.student_id})</span>
+                            </span>
                             <button
                               onClick={() =>
                                 setCancellingReg({
                                   eventId: evt.id,
-                                  studentId: reg.student_id,
-                                  studentName: reg.name,
-                                })
+                                  studentId: r.student_id,
+                                  studentName: r.name,
+                                 })
                               }
-                              className="text-slate-400 hover:text-rose-400 p-0.5 transition"
-                              title="Cancel this student registration"
+                              className="text-black hover:text-rose-700 dark:hover:text-rose-400 p-0.5"
+                              title="Cancel student registration"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <X className="w-3 h-3" />
                             </button>
                           </div>
                         ))}
@@ -420,40 +422,35 @@ export default function EventsPage() {
                   )}
                 </div>
 
-                {/* Bottom Actions */}
-                <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-800/80">
+                {/* Bottom Action Buttons */}
+                <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-emerald-100 dark:border-emerald-900/30">
                   <button
-                    onClick={() => {
-                      setRegisteringEvent(evt);
-                      setStudentData({ student_id: '20-40532', name: 'Sakibul Hassan' });
-                    }}
+                    onClick={() => openRegisterModal(evt)}
                     disabled={isFull}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow-md transition ${
+                    className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all shadow-md ${
                       isFull
-                        ? 'bg-slate-800/60 text-slate-500 border border-slate-800 cursor-not-allowed'
-                        : 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-600/20 hover:scale-[1.02]'
+                        ? 'bg-neutral-200 dark:bg-emerald-950/30 text-neutral-500 dark:text-emerald-600/50 cursor-not-allowed border border-neutral-300 dark:border-emerald-900/30'
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/15 hover:scale-[1.02]'
                     }`}
                   >
                     <UserPlus className="w-3.5 h-3.5" />
-                    {isFull ? 'Event Full' : 'Register Student'}
+                    {isFull ? 'At Capacity' : 'Register Student'}
                   </button>
 
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => openEditForm(evt)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
-                      title="Edit Event"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setDeletingId(evt.id)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
-                      title="Delete Event"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => openEditForm(evt)}
+                    className="p-2 rounded-xl text-black hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 transition"
+                    title="Edit Event"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setDeletingId(evt.id)}
+                    className="p-2 rounded-xl text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-900/50 transition shadow-sm"
+                    title="Delete Event"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             );
@@ -465,40 +462,40 @@ export default function EventsPage() {
       <Modal
         isOpen={isFormOpen}
         onClose={closeForm}
-        title={editingEvent ? 'Edit Campus Event' : 'Create Campus Event'}
-        subtitle="Specify event schedule, venue, organizer, and capacity."
+        title={editingEvent ? 'Edit Campus Event' : 'Publish New Campus Event'}
+        subtitle="Manage event schedule, venue, capacity, and registration status."
       >
         <form onSubmit={handleEventSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
               Event Name *
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. AUSTPIC AI Build Hackathon"
+              placeholder="e.g. AUST AI Build Hackathon"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500"
+              className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm font-semibold text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
               Description
             </label>
             <textarea
               rows="3"
-              placeholder="Provide event details, objectives, and prerequisites..."
+              placeholder="Describe event details, prerequisites, and agenda..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500 resize-none"
+              className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm font-medium text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
                 Start Date *
               </label>
               <input
@@ -506,55 +503,57 @@ export default function EventsPage() {
                 required
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm font-mono font-bold text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
                 End Date
               </label>
               <input
                 type="date"
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm font-mono font-bold text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
                 Start Time (24h) *
               </label>
               <input
-                type="time"
+                type="text"
                 required
+                placeholder="09:00"
                 value={formData.start_time}
                 onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm font-mono font-bold text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
                 End Time (24h) *
               </label>
               <input
-                type="time"
+                type="text"
                 required
+                placeholder="17:00"
                 value={formData.end_time}
                 onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm font-mono font-bold text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Venue Room *
+              <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
+                Venue / Room *
               </label>
               <input
                 type="text"
@@ -562,25 +561,12 @@ export default function EventsPage() {
                 placeholder="e.g. 7C01"
                 value={formData.venue}
                 onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm font-semibold text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Organizer
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. AUSTPIC"
-                value={formData.organizer}
-                onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
                 Max Capacity *
               </label>
               <input
@@ -589,25 +575,55 @@ export default function EventsPage() {
                 required
                 value={formData.capacity}
                 onChange={(e) => setFormData({ ...formData, capacity: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm font-semibold text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
+                Status
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm font-semibold capitalize text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
+              >
+                {EVENT_STATUSES.filter((s) => s !== 'all').map((s) => (
+                  <option key={s} value={s} className="bg-white dark:bg-[#111111] text-black dark:text-emerald-50">
+                    {s}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+          <div>
+            <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
+              Organizer
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. AUSTPIC / CSE Department"
+              value={formData.organizer}
+              onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
+              className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-emerald-100 dark:border-emerald-800/50">
             <button
               type="button"
               onClick={closeForm}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800"
+              className="px-4 py-2 rounded-xl text-sm font-bold text-black dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saveMutation.isPending}
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/20"
+              className="px-5 py-2 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.02]"
             >
-              {saveMutation.isPending ? 'Saving...' : editingEvent ? 'Update Event' : 'Create Event'}
+              {saveMutation.isPending ? 'Saving...' : editingEvent ? 'Update Event' : 'Publish Event'}
             </button>
           </div>
         </form>
@@ -618,11 +634,11 @@ export default function EventsPage() {
         isOpen={Boolean(registeringEvent)}
         onClose={() => setRegisteringEvent(null)}
         title={`Register for ${registeringEvent?.name}`}
-        subtitle={`Capacity: ${registeringEvent?.registered}/${registeringEvent?.capacity} registered.`}
+        subtitle={`Current Capacity: ${registeringEvent?.registered} / ${registeringEvent?.capacity} seats filled.`}
       >
         <form onSubmit={handleRegisterSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
               Student ID *
             </label>
             <input
@@ -631,12 +647,12 @@ export default function EventsPage() {
               placeholder="e.g. 20-40532"
               value={studentData.student_id}
               onChange={(e) => setStudentData({ ...studentData, student_id: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
+              className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm font-mono font-bold text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-bold text-black dark:text-emerald-100 mb-1">
               Student Full Name *
             </label>
             <input
@@ -645,44 +661,28 @@ export default function EventsPage() {
               placeholder="e.g. Sakibul Hassan"
               value={studentData.name}
               onChange={(e) => setStudentData({ ...studentData, name: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500"
+              className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#111111] border border-emerald-200 dark:border-emerald-800 text-sm font-semibold text-black dark:text-emerald-50 focus:outline-none focus:border-emerald-500 shadow-sm"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-emerald-100 dark:border-emerald-800/50">
             <button
               type="button"
               onClick={() => setRegisteringEvent(null)}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800"
+              className="px-4 py-2 rounded-xl text-sm font-bold text-black dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={registerMutation.isPending}
-              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm shadow-lg shadow-purple-600/20"
+              className="px-5 py-2 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.02]"
             >
-              {registerMutation.isPending ? 'Registering...' : 'Confirm Registration'}
+              {registerMutation.isPending ? 'Verifying Capacity...' : 'Confirm Registration'}
             </button>
           </div>
         </form>
       </Modal>
-
-      {/* Cancel Registration Confirmation */}
-      <ConfirmDialog
-        isOpen={Boolean(cancellingReg)}
-        onClose={() => setCancellingReg(null)}
-        onConfirm={() =>
-          cancelRegMutation.mutate({
-            eventId: cancellingReg.eventId,
-            studentId: cancellingReg.studentId,
-          })
-        }
-        title="Cancel Registration"
-        message={`Are you sure you want to remove registration for ${cancellingReg?.studentName} (${cancellingReg?.studentId})? This will free up a registration slot.`}
-        confirmText="Remove Student"
-        isLoading={cancelRegMutation.isPending}
-      />
 
       {/* Delete Event Confirmation */}
       <ConfirmDialog
@@ -690,9 +690,26 @@ export default function EventsPage() {
         onClose={() => setDeletingId(null)}
         onConfirm={() => deleteMutation.mutate(deletingId)}
         title="Delete Campus Event"
-        message="Are you sure you want to delete this event? All attendee registrations will be permanently removed."
+        message="Are you sure you want to delete this event? All student registrations for this event will also be removed."
         confirmText="Delete Event"
         isLoading={deleteMutation.isPending}
+      />
+
+      {/* Cancel Registration Confirmation */}
+      <ConfirmDialog
+        isOpen={Boolean(cancellingReg)}
+        onClose={() => setCancellingReg(null)}
+        onConfirm={() =>
+          cancellingReg &&
+          cancelRegMutation.mutate({
+            eventId: cancellingReg.eventId,
+            studentId: cancellingReg.studentId,
+          })
+        }
+        title="Cancel Student Registration"
+        message={`Are you sure you want to cancel ${cancellingReg?.studentName}'s registration? Their seat will immediately open up.`}
+        confirmText="Cancel Registration"
+        isLoading={cancelRegMutation.isPending}
       />
     </div>
   );
