@@ -4,99 +4,127 @@ An intelligent university platform powered by an AI agent that understands and a
 
 ---
 
-## The Challenge
+## 1. Project Overview
 
-Students struggle daily with scattered campus information — class changes buried in group chats, deadlines forgotten until the last minute, no easy way to know what's happening on campus right now.
+**CampusOS** is a comprehensive campus intelligence system designed for universities (specifically modeled after AUST). It bridges scattered campus information into a single real-time platform with full CRUD operations for:
+- 📅 **Schedules** (Weekly timetable, rooms, instructors)
+- 🏢 **Rooms** (Classrooms, labs, seminar rooms with equipment, capacity, and live booking clash checks)
+- 🎉 **Events** (Workshops, guest lectures, hackathons with interactive student registrations)
+- 📢 **Announcements** (Department updates, prioritized notices, expirations)
+- 📝 **Assignments** (Course homework, project deadlines, submission status)
 
-Your job: build **CampusOS** — a two-part app with a data dashboard and an AI agent that always reads live data.
-
-Read the full problem statement → [`PROBLEM_STATEMENT.md`](./PROBLEM_STATEMENT.md)
-
----
-
-## Repository Structure
-
-```
-campusos-hackathon/
-│
-├── README.md                    ← You are here
-├── PROBLEM_STATEMENT.md         ← Full problem statement + scoring
-├── SUBMISSION.md                ← How and where to submit
-│
-├── data/                        ← Seed data (load these into your backend)
-│   ├── schedules.json
-│   ├── rooms.json
-│   ├── events.json
-│   ├── announcements.json
-│   └── assignments.json
-│
-├── schema/
-│   └── schema.md                ← Field names, types, and constraints for all 5 systems
-│
-└── sample_queries/
-    └── sample_queries.md        ← Queries we will use when judging your agent
-```
+It features an **Autonomous AI Agent** connected directly to the live backend database. The agent can answer natural language campus questions, execute bookings, register students for events, and dynamically reflect database updates without caching stale seed data.
 
 ---
 
-## How to Participate
+## 2. Tech Stack
 
-### 1. Fork the repository
-
-Click **Fork** in the top-right corner of this repo's GitHub page. This creates your own copy under your GitHub account, where you'll build your solution.
-
-### 2. Clone your fork
-
-```bash
-git clone https://github.com/YOUR_USERNAME/campusos-hackathon.git
-cd campusos-hackathon
-```
-
-### 3. Build your solution inside your fork
-
-> Your solution lives in your fork — do not open a pull request to this repo.
-
-### 4. Making your fork private
-
-By default, a fork is public. If you want to keep your work hidden from other participants while you build:
-
-1. Go to your fork on GitHub
-2. Open **Settings** (top of the repo page)
-3. Scroll to the **Danger Zone** at the bottom
-4. Click **Change repository visibility** → **Make private**
-5. Confirm by typing the repository name
-
-> **You may keep your fork private during the hackathon period, but it must be switched back to public by 8:30 PM on the submission deadline.** Repositories still private after that time will not be judged. To make it public again, repeat the steps above and choose **Make public** instead.
-
-### 5. Submit
-
-Submit your fork's public URL via the instructions in [`SUBMISSION.md`](./SUBMISSION.md).
+- **Backend**: Laravel 12 (PHP 8.2+), Eloquent ORM, RESTful API
+- **Database**: MySQL (seeded from initial dataset, fully persistent across app restarts)
+- **Frontend**: React 19, Vite, Tailwind CSS v4, Lucide Icons, Axios, React Router v7
+- **AI Agent Engine**: Tool-calling AI Architecture supporting OpenAI / Groq / Gemini with a built-in deterministic live database reasoning fallback
 
 ---
 
-## Quick Links
+## 3. Setup & Installation Instructions
 
-| Resource | Link |
-|----------|------|
-| Full problem statement | [`PROBLEM_STATEMENT.md`](./PROBLEM_STATEMENT.md) |
-| Data schema | [`schema/schema.md`](./schema/schema.md) |
-| Sample agent queries | [`sample_queries/sample_queries.md`](./sample_queries/sample_queries.md) |
-| Submission guide | [`SUBMISSION.md`](./SUBMISSION.md) |
-
----
-
-## Seed Data Overview
-
-| File | Records | What It Contains |
-|------|---------|-----------------|
-| `schedules.json` | 24 | Class timetable — course, day, time, room, instructor |
-| `rooms.json` | 20 | Rooms 7A01–7A07, 7B01–7B08, 7C01–7C05 with equipment and bookings |
-| `events.json` | 7 | Campus events with registration lists |
-| `announcements.json` | 8 | Notices with priority levels and expiry dates |
-| `assignments.json` | 8 | Course assignments with deadlines and submission status |
-
-> **Important:** These JSON files are only the starting/seed data — not the database itself. Load them into a real backend (a database, or at minimum a backend service with persistent storage) on app startup. Your dashboard and AI agent must both read from and write to that backend, not the static JSON files directly. If you add, edit, or delete a record, the change must be saved in your backend and still be there after a reload — the JSON files in this repo will not update. The agent is also expected to always query the current backend state, not a cached or hardcoded copy of the seed data.
+### Prerequisites
+- PHP >= 8.2 with `pdo_mysql`, `fileinfo`, `mbstring`, `openssl` enabled
+- Composer
+- MySQL (e.g. XAMPP or native MySQL running on `127.0.0.1:3306`)
+- Node.js >= 18.x & npm
 
 ---
 
-Good luck. Build something that actually works.
+### Step 1: Backend Setup (Laravel + MySQL)
+
+1. Open a terminal and navigate to the `backend` folder:
+   ```bash
+   cd backend
+   ```
+
+2. Copy the environment configuration and set your database credentials:
+   ```bash
+   cp .env.example .env
+   ```
+   *(Ensure `DB_CONNECTION=mysql`, `DB_HOST=127.0.0.1`, `DB_PORT=3306`, `DB_DATABASE=campus_os`, `DB_USERNAME=root`, `DB_PASSWORD=` match your local MySQL settings)*
+
+3. Install Composer dependencies:
+   ```bash
+   composer install
+   ```
+
+4. Generate the application key:
+   ```bash
+   php artisan key:generate
+   ```
+
+5. Run migrations and seed data from `/data/*.json` into MySQL:
+   ```bash
+   php artisan migrate:fresh --seed
+   ```
+
+6. Start the Laravel backend server:
+   ```bash
+   php artisan serve --port=8000
+   ```
+   *The backend API will run at `http://localhost:8000`.*
+
+---
+
+### Step 2: Frontend Setup (React + Vite)
+
+1. Open a new terminal and navigate to the `client` folder:
+   ```bash
+   cd client
+   ```
+
+2. Install npm dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure `.env` (optional, default is `http://localhost:8000/api`):
+   ```env
+   VITE_API_URL=http://localhost:8000/api
+   ```
+
+4. Build or run the development server:
+   ```bash
+   npm run dev
+   ```
+   *The frontend dashboard will run at `http://localhost:5173`.*
+
+---
+
+## 4. Environment Variables
+
+### Backend (`backend/.env`)
+| Variable | Description | Default |
+|---|---|---|
+| `DB_CONNECTION` | Database Driver | `mysql` |
+| `DB_HOST` | Database Host | `127.0.0.1` |
+| `DB_PORT` | Database Port | `3306` |
+| `DB_DATABASE` | Database Name | `campus_os` |
+| `DB_USERNAME` | Database User | `root` |
+| `DB_PASSWORD` | Database Password | *(empty)* |
+| `OPENAI_API_KEY` | Optional OpenAI key for LLM tool calling | *(optional)* |
+| `GROQ_API_KEY` | Optional Groq key for Llama 3.3 tool calling | *(optional)* |
+
+### Frontend (`client/.env`)
+| Variable | Description | Default |
+|---|---|---|
+| `VITE_API_URL` | Backend API URL | `http://localhost:8000/api` |
+
+---
+
+## 5. How to Use the AI Agent
+
+Navigate to the **AI Assistant** tab in the dashboard (or click **Ask AI**). You can execute queries such as:
+
+- **Timetable Queries**: *"What classes do I have on Sunday?"* or *"When is my next class?"*
+- **Room Search with Filters**: *"Which labs have a projector and can fit at least 30 people?"*
+- **Action Execution (Booking)**: *"Book Room 7A02 tomorrow from 3 PM to 5 PM"*
+- **Action Execution (Registration)**: *"Register me for the Guest Lecture on Deep Learning"*
+- **Assignments & Deadlines**: *"What assignments do I have due this week?"*
+- **Announcements**: *"Show me all high priority announcements"*
