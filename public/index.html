@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="CampusOS — live university operations and an AI campus assistant." />
+    <title>CampusOS — Live campus intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary navigation">
+        <a class="brand" href="#overview" aria-label="CampusOS home"><span class="brand-mark">C</span><span>Campus<span>OS</span></span></a>
+        <nav id="systemTabs" class="nav-list"></nav>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <button id="menuButton" class="icon-button menu-button" type="button" aria-label="Open navigation">☰</button>
+          <div><p class="eyebrow">University command center</p><h1 id="pageTitle">Good day, Dr. Doom</h1></div>
+          <button id="assistantShortcut" class="assistant-shortcut" type="button"><span>✦</span> Ask CampusOS</button>
+        </header>
+
+        <div id="globalLoading" class="loading-bar" aria-label="Loading"></div>
+        <section id="overview" class="page-view"></section>
+        <section id="systemContent" class="page-view hidden"></section>
+        <section id="assistant" class="page-view hidden"></section>
+      </main>
+    </div>
+
+    <div id="modalRoot"></div>
+    <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>

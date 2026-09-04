@@ -12,7 +12,7 @@
     "capacity": 60,
     "registered": 47,
     "registrations": [
-      { "student_id": "20-40532", "name": "Sakibul Hassan" },
+      { "student_id": "20-40532", "name": "Dr. Doom" },
       { "student_id": "20-40511", "name": "Farhan Ahmed" },
       { "student_id": "20-40498", "name": "Tasnia Islam" }
     ],
@@ -31,7 +31,7 @@
     "capacity": 70,
     "registered": 62,
     "registrations": [
-      { "student_id": "20-40532", "name": "Sakibul Hassan" },
+      { "student_id": "20-40532", "name": "Dr. Doom" },
       { "student_id": "21-41205", "name": "Rafi Hossain" }
     ],
     "status": "upcoming"
@@ -49,7 +49,7 @@
     "capacity": 45,
     "registered": 38,
     "registrations": [
-      { "student_id": "20-40532", "name": "Sakibul Hassan" },
+      { "student_id": "20-40532", "name": "Dr. Doom" },
       { "student_id": "20-40511", "name": "Farhan Ahmed" }
     ],
     "status": "upcoming"
@@ -67,7 +67,7 @@
     "capacity": 30,
     "registered": 22,
     "registrations": [
-      { "student_id": "20-40532", "name": "Sakibul Hassan" }
+      { "student_id": "20-40532", "name": "Dr. Doom" }
     ],
     "status": "upcoming"
   },
