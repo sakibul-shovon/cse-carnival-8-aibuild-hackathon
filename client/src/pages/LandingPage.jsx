@@ -10,7 +10,17 @@ import {
   Megaphone,
   BookOpenCheck,
   Layers,
+  Clock,
+  CheckCircle2,
+  Database,
+  Cpu,
+  Users,
+  LogIn,
+  UserPlus,
+  LogOut,
+  User,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
 
 const SYSTEM_FEATURES = [
@@ -67,6 +77,8 @@ const STATS = [
 ];
 
 export default function LandingPage() {
+  const { user, isAuthenticated, logout } = useAuth();
+
   return (
     <div className="relative min-h-screen bg-white dark:bg-black text-black dark:text-emerald-50 overflow-hidden flex flex-col justify-between transition-colors duration-300 selection:bg-emerald-500 selection:text-white">
       {/* Background Campus Image Watermark with Glassmorphic Gradient Mask */}
@@ -87,9 +99,9 @@ export default function LandingPage() {
 
       {/* Content Wrapper */}
       <div className="relative z-10 flex flex-col flex-1">
-        {/* Top Navigation Bar with Theme Switcher at Upper Right */}
+        {/* Top Navigation Bar with Theme Switcher and Auth Controls */}
         <header className="border-b border-emerald-200/80 dark:border-emerald-900/40 bg-white/80 dark:bg-black/80 backdrop-blur-xl sticky top-0 z-50 transition-colors duration-300">
-          <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-5 sm:px-8 py-3.5 flex items-center justify-between">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-600/20 group-hover:scale-105 transition-transform">
@@ -107,8 +119,8 @@ export default function LandingPage() {
             </Link>
 
             {/* Nav Links & Upper-Right Corner Controls */}
-            <div className="flex items-center gap-3 sm:gap-6">
-              <div className="hidden md:flex items-center gap-6 text-sm text-black dark:text-emerald-200 font-semibold">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="hidden lg:flex items-center gap-5 text-sm text-black dark:text-emerald-200 font-semibold mr-2">
                 <a href="#features" className="hover:text-emerald-700 dark:hover:text-white transition">Systems</a>
                 <a href="#stats" className="hover:text-emerald-700 dark:hover:text-white transition">Overview</a>
                 <Link to="/chat" className="hover:text-emerald-700 dark:hover:text-emerald-300 transition flex items-center gap-1.5">
@@ -118,15 +130,55 @@ export default function LandingPage() {
               </div>
 
               {/* Theme Toggle Button (Light/Dark Switcher) */}
-              <ThemeToggle />
+              <ThemeToggle compact={true} />
 
-              <Link
-                to="/schedules"
-                className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-emerald-600/25 transition-all hover:scale-[1.03]"
-              >
-                <span>Launch App</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              {/* AUTH BUTTONS / USER PROFILE */}
+              {isAuthenticated ? (
+                <div className="flex items-center gap-2">
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-black dark:text-emerald-200">
+                    <span className="text-base">{user.avatar || '👨‍🎓'}</span>
+                    <span className="truncate max-w-[120px]">{user.name}</span>
+                  </div>
+
+                  <Link
+                    to="/schedules"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.02]"
+                  >
+                    <span>Dashboard</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+
+                  <button
+                    onClick={logout}
+                    title="Sign Out"
+                    className="p-2 rounded-xl text-black/70 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-500/10 transition"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {/* Login Link */}
+                  <Link
+                    to="/auth?mode=login"
+                    id="nav-login-btn"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-black dark:text-emerald-200 hover:text-emerald-700 dark:hover:text-white hover:bg-emerald-50/80 dark:hover:bg-slate-900 border border-emerald-300 dark:border-emerald-800/60 transition"
+                  >
+                    <LogIn className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                    <span>Log In</span>
+                  </Link>
+
+                  {/* Register Link */}
+                  <Link
+                    to="/auth?mode=register"
+                    id="nav-register-btn"
+                    className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-emerald-600/30 transition-all hover:scale-[1.03]"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>Register</span>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -156,18 +208,27 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto mb-16">
             <Link
               to="/schedules"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm sm:text-base shadow-xl shadow-emerald-600/30 transition-all hover:scale-105"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm sm:text-base shadow-xl shadow-emerald-600/30 transition-all hover:scale-105"
             >
               <span>Explore Dashboard</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
 
             <Link
-              to="/chat"
+              to={isAuthenticated ? "/chat" : "/auth?mode=login"}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl glass-card text-black dark:text-white hover:bg-emerald-50 dark:hover:bg-[#111111] border border-emerald-300 dark:border-emerald-800 font-bold text-sm sm:text-base shadow-md transition-all hover:scale-105"
             >
-              <Bot className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              <span>Talk to AI Copilot</span>
+              {isAuthenticated ? (
+                <>
+                  <Bot className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Talk to AI Copilot</span>
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Sign In / Register</span>
+                </>
+              )}
             </Link>
           </div>
 
@@ -248,17 +309,28 @@ export default function LandingPage() {
                 Experience CampusOS in Action
               </h3>
               <p className="text-xs sm:text-sm text-black dark:text-emerald-100/90 max-w-xl font-medium">
-                Edit data in the dashboard, open the AI agent, and ask it anything. Live functions ensure instant, accurate answers and zero stale caching.
+                Sign in with your student profile, edit data in the dashboard, open the AI agent, and ask it anything. Live functions ensure instant, accurate answers and zero stale caching.
               </p>
             </div>
 
-            <Link
-              to="/chat"
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-xl shadow-emerald-600/30 transition-all hover:scale-105 shrink-0"
-            >
-              <Bot className="w-5 h-5" />
-              <span>Start Agent Chat</span>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+              {!isAuthenticated && (
+                <Link
+                  to="/auth?mode=register"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-xl shadow-emerald-600/30 transition-all hover:scale-105"
+                >
+                  <UserPlus className="w-5 h-5" />
+                  <span>Create Account</span>
+                </Link>
+              )}
+              <Link
+                to="/chat"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl glass-card text-black dark:text-white font-bold text-sm shadow-md transition-all hover:scale-105 border border-emerald-300 dark:border-emerald-800"
+              >
+                <Bot className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <span>CampusCopilot</span>
+              </Link>
+            </div>
           </div>
         </section>
       </div>
