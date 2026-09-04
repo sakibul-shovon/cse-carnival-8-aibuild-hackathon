@@ -36,6 +36,11 @@ const SAMPLE_QUERIES = [
     icon: Zap,
   },
   {
+    category: 'Events',
+    text: 'What are the upcoming events on campus?',
+    icon: PartyPopper,
+  },
+  {
     category: 'Multi-Source',
     text: "I'm free until 2 PM — is there anything on campus I could drop into?",
     icon: Sparkles,
@@ -57,20 +62,21 @@ const SAMPLE_QUERIES = [
   },
 ];
 
+const INITIAL_GREETING = {
+  role: 'assistant',
+  content:
+    "👋 Hey there! I'm **CampusCopilot** — your real-time university AI assistant.\n\nI can check live class routines, list upcoming workshops & hackathons, find free labs with projectors, track assignments, reserve study rooms, and register you for events in real time.\n\n*What would you like to explore today?*",
+  actions_taken: [],
+  timestamp: 'Just now',
+};
+
 export default function ChatWidget({ isFullPage = false }) {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
 
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content:
-        "Hello! I am your **CampusOS AI Assistant**.\n\nI have direct, real-time access to class routines, lab bookings, upcoming events, notices, and assignments. How can I help you today?",
-      actions_taken: [],
-    },
-  ]);
+  const [messages, setMessages] = useState([INITIAL_GREETING]);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);

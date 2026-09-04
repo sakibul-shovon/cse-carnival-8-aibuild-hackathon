@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
 import {
   Calendar,
   Building2,
@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   Compass,
+  Home,
 } from 'lucide-react';
 import { api } from '../api/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -20,12 +21,12 @@ import { useToast } from './Toast';
 import ThemeToggle from './ThemeToggle';
 
 const NAV_ITEMS = [
-  { path: '/', label: 'Schedules', icon: Calendar, desc: 'Class routines & slots' },
+  { path: '/schedules', label: 'Schedules', icon: Calendar, desc: 'Class routines & slots' },
   { path: '/rooms', label: 'Rooms', icon: Building2, desc: 'Classrooms, labs & booking' },
   { path: '/events', label: 'Events', icon: PartyPopper, desc: 'Hackathons & registrations' },
   { path: '/announcements', label: 'Announcements', icon: Megaphone, desc: 'Notices & advisories' },
   { path: '/assignments', label: 'Assignments', icon: BookOpenCheck, desc: 'Tasks & deadlines' },
-  { path: '/chat', label: 'Agent Chat', icon: BotMessageSquare, desc: 'AI assistant & live actions', highlight: true },
+  { path: '/chat', label: 'CampusCopilot', icon: BotMessageSquare, desc: 'AI Copilot & live actions', highlight: true },
 ];
 
 export default function Layout() {
@@ -55,14 +56,14 @@ export default function Layout() {
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-emerald-50 flex flex-col md:flex-row transition-colors duration-300">
       {/* Mobile Top Header */}
       <div className="md:hidden flex items-center justify-between px-4 py-3.5 border-b border-emerald-200/80 dark:border-emerald-900/40 bg-white/80 dark:bg-black/80 backdrop-blur-xl sticky top-0 z-40 shadow-sm">
-        <div className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center shadow-md shadow-emerald-600/25">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <span className="font-extrabold tracking-tight text-black dark:text-white text-lg">
             CampusOS
           </span>
-        </div>
+        </Link>
 
         {/* Upper Corner Controls on Mobile */}
         <div className="flex items-center gap-2">
@@ -84,8 +85,8 @@ export default function Layout() {
       >
         {/* Logo / Brand Header */}
         <div className="p-5 hidden md:flex items-center justify-between border-b border-emerald-100/80 dark:border-emerald-900/40">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-600/20">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-600/20 group-hover:scale-105 transition-transform">
               <Layers className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -99,12 +100,22 @@ export default function Layout() {
                 Campus Intelligence
               </p>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Navigation Links */}
         <div className="p-3.5 flex-1 space-y-1.5 overflow-y-auto">
-          <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-black dark:text-emerald-400/70">
+          {/* Back to Landing Page link */}
+          <Link
+            to="/"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-black dark:text-emerald-300/80 hover:text-emerald-700 dark:hover:text-white hover:bg-emerald-50/80 dark:hover:bg-emerald-900/30 border border-emerald-200/60 dark:border-emerald-800/40 transition mb-2"
+          >
+            <Home className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>← Landing Overview</span>
+          </Link>
+
+          <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-black dark:text-emerald-400/70">
             Campus Systems
           </div>
 

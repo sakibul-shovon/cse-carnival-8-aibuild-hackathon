@@ -12,12 +12,12 @@ export default function ChatPage() {
             <span className="p-2.5 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md shadow-emerald-600/30">
               <Bot className="w-5 h-5" />
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-black dark:text-white tracking-tight">
-              AI Student Assistant & Tool Orchestrator
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-black dark:text-white tracking-tight flex items-center gap-2">
+              CampusCopilot <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">AI</span>
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-black dark:text-emerald-400/80 font-medium mt-1">
-            Real-time tool-calling interface powered by live database integration and reasoning algorithms.
+            Your smart university assistant — real-time class routines, room booking, event RSVPs & live campus intelligence.
           </p>
         </div>
 
