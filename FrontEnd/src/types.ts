@@ -1,0 +1,15 @@
+export type ResourceName = 'schedules' | 'rooms' | 'events' | 'announcements' | 'assignments'
+export type ListResponse<T> = { items: T[]; total: number }
+export type ApiErrorBody = { error: { code: string; message: string; details: Record<string, unknown> } }
+export type Enrollment = { course: string; section: string }
+export type User = { id: string; student_id: string; name: string; department: string; role: 'student' | 'admin'; enrollments: Enrollment[] }
+export type Schedule = { id: string; course: string; title: string; day: string; start_time: string; end_time: string; room: string; instructor: string; section: string }
+export type Booking = { booking_id: string; booked_by: string; date: string; start_time: string; end_time: string; purpose: string }
+export type Room = { id: string; room_number: string; type: 'classroom' | 'lab' | 'seminar'; capacity: number; equipment: string[]; floor: number; status: 'available' | 'unavailable'; bookings: Booking[] }
+export type Registration = { student_id: string; name: string }
+export type Event = { id: string; name: string; description: string; date: string; start_time: string; end_time: string; end_date: string; venue: string; organizer: string; capacity: number; registered: number; registrations: Registration[]; status: 'upcoming' | 'ongoing' | 'full' | 'completed' | 'cancelled' }
+export type Announcement = { id: string; title: string; body: string; date: string; priority: 'high' | 'medium' | 'low'; posted_by: string; expires: string }
+export type Assignment = { id: string; course: string; course_title: string; title: string; description: string; assigned_date: string; deadline: string; submission_platform: string; status: 'pending' | 'submitted' | 'graded' | 'late'; marks: number }
+export type CampusResource = Schedule | Room | Event | Announcement | Assignment
+export type ResourceMap = { schedules: Schedule; rooms: Room; events: Event; announcements: Announcement; assignments: Assignment }
+export type AgentResponse = { conversation_id: string; reply: string; status: 'completed' | 'needs_clarification' | 'refused' | 'failed'; tool_calls: { name: string; status: string; result_summary?: string }[] }

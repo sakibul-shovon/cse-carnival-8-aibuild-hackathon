@@ -2,6 +2,8 @@
 node_modules/
 __pycache__/
 *.pyc
+*.db
+.pytest_cache/
 .venv/
 venv/
 env/
@@ -28,3 +30,6 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Local mock API state
+FrontEnd/mock/.state.json
