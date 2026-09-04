@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type SyntheticEvent } from 'react';
 import { ArrowRight, LoaderCircle, LockKeyhole, Sparkles } from 'lucide-react';
 import { CampusApp } from '@/components/campus-app';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ export function AuthGate({ initialProfile = false }: { initialProfile?: boolean 
 
   useEffect(() => { void fetch('/api/auth/session', { cache: 'no-store' }).then(async (response) => response.ok ? response.json() as Promise<{ user: AuthUser | null }> : { user: null }).then((payload) => setUser(payload.user)).catch(() => setUser(null)); }, []);
 
-  const submit = async (event: FormEvent) => {
+  const submit = async (event: SyntheticEvent) => {
     event.preventDefault(); setError(''); setSubmitting(true);
     try {
       const response = await fetch(`/api/auth/${mode === 'login' ? 'login' : 'register'}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });

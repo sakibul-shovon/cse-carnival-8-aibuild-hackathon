@@ -38,10 +38,15 @@ function formatTime(value: unknown) {
   return `${displayHour}:${pad(minute)} ${meridiem}`;
 }
 
+function toStr(value: unknown, fallback = ''): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return value.toString();
+  return fallback;
+}
+
 function formatDate(value: unknown) {
-  if (!value) return '—';
-  const raw = String(value);
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(`${raw}T12:00:00`));
+  if (typeof value !== 'string' || !value) return '—';
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(`${value}T12:00:00`));
 }
 
 function getDayGreeting(hour: number) {
@@ -526,8 +531,8 @@ export function OverviewCommandCenter({
             <div className="space-y-3">
               {displayedClasses.map((item) => {
                 const alert = classAlerts.get(item.id);
-                const startTimeStr = String(item.start_time || '00:00');
-                const endTimeStr = String(item.end_time || '00:00');
+                const startTimeStr = toStr(item.start_time, '00:00');
+                const endTimeStr = toStr(item.end_time, '00:00');
 
                 const [startH, startM] = startTimeStr.split(':').map(Number);
                 const [endH, endM] = endTimeStr.split(':').map(Number);
@@ -612,7 +617,7 @@ export function OverviewCommandCenter({
                         <span className="text-sm font-medium text-muted-foreground">
                           {String(item.title)}
                         </span>
-                        {item.section && (
+                        {Boolean(item.section) && (
                           <span className="rounded-md bg-muted/60 px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
                             Sec {String(item.section)}
                           </span>
@@ -858,7 +863,7 @@ export function OverviewCommandCenter({
             <Info className="size-3.5" />
             <span>
               {realCgpa || realAttendance
-                ? `CGPA: ${String(realCgpa ?? '—')} · Attendance: ${String(realAttendance ?? '—')}%`
+                ? `CGPA: ${toStr(realCgpa, '—')} · Attendance: ${toStr(realAttendance, '—')}%`
                 : 'Attendance & CGPA: Verified official grades will be synchronized as published by the registrar.'}
             </span>
           </div>
@@ -1166,7 +1171,7 @@ export function OverviewCommandCenter({
                   variant={activeNotice.priority === 'high' ? 'destructive' : 'secondary'}
                   className="font-bold text-[10px] uppercase"
                 >
-                  {String(activeNotice.priority ?? 'Notice')} Priority
+                  {toStr(activeNotice.priority, 'Notice')} Priority
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   Posted {formatDate(activeNotice.date)}

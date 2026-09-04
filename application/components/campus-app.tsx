@@ -14,6 +14,8 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { FIELDS, SYSTEMS, singular, type CampusData, type CampusRecord, type SystemName } from '@/lib/campus-types';
 import type { AuthUser } from '@/lib/auth';
 import { OverviewCommandCenter } from '@/components/dashboard/overview-command-center';
+import { CampusSearchDialog } from '@/components/campus-search-dialog';
+import { StudentNotificationBell } from '@/components/student-notifications';
 
 type ViewName = 'overview' | 'profile' | SystemName;
 type ChatMessage = { role: 'user' | 'assistant'; text: string; trace?: { tool: string; label: string }[] };
@@ -49,6 +51,7 @@ export function CampusApp({ user, onLogout, onUserUpdate, initialView = 'overvie
   const [deleteTarget, setDeleteTarget] = useState<{ system: SystemName; record: CampusRecord } | null>(null);
   const [bookingTarget, setBookingTarget] = useState<CampusRecord | null>(null); const [notice, setNotice] = useState('');
   const [externalPrompt, setExternalPrompt] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true); setError('');
@@ -100,7 +103,29 @@ export function CampusApp({ user, onLogout, onUserUpdate, initialView = 'overvie
       <section className="min-h-screen lg:pl-[246px]">
         <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-border/80 bg-background/92 px-4 backdrop-blur-xl md:px-8">
           <div className="flex items-center gap-3"><Button className="lg:hidden" variant="outline" size="icon" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu /></Button><div><p className="hidden text-xs font-medium text-muted-foreground sm:block">{new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())}</p><h1 className="font-heading text-lg font-bold tracking-[-.035em] md:text-2xl">{view === 'overview' ? `Command Center` : view === 'profile' ? 'My profile' : systemMeta[view].title}</h1></div></div>
-          <div className="flex items-center gap-2"><button className="hidden h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm text-muted-foreground shadow-sm md:flex" onClick={() => currentSystem && document.getElementById('data-search')?.focus()}><Search className="size-4"/>Search campus</button><button className="grid size-10 place-items-center rounded-xl border border-border bg-card shadow-sm" aria-label="Notifications" onClick={() => setActiveView('announcements')}><Bell className="size-4"/></button><div className="group relative"><button className="ml-1 grid size-10 place-items-center rounded-xl bg-[#243b67] text-xs font-bold text-white" aria-label="Open account menu">{user.fullName.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()}</button><div className="invisible absolute right-0 top-12 w-56 rounded-xl border border-border bg-card p-2 opacity-0 shadow-xl transition group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100"><p className="px-2 py-1 text-sm font-bold">{user.fullName}</p><p className="px-2 pb-2 text-xs text-muted-foreground">{user.studentId} · {user.department}</p><button onClick={() => setActiveView('overview')} className="block w-full text-left rounded-lg px-2 py-2 text-sm font-semibold hover:bg-muted">Dashboard</button><button onClick={() => setActiveView('profile')} className="block w-full text-left rounded-lg px-2 py-2 text-sm font-semibold hover:bg-muted">Profile</button><button onClick={() => void onLogout()} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"><LogOut className="size-4" />Log out</button></div></div></div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm text-muted-foreground shadow-xs hover:border-[#335786]/40 hover:text-foreground transition cursor-pointer"
+              onClick={() => setSearchOpen(true)}
+              title="Search campus (Ctrl+K)"
+            >
+              <Search className="size-4 text-muted-foreground" />
+              <span className="hidden sm:inline">Search campus...</span>
+              <kbd className="hidden md:inline-flex items-center gap-0.5 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                Ctrl K
+              </kbd>
+            </button>
+            <StudentNotificationBell
+              user={user}
+              data={data}
+              onNavigate={setActiveView}
+            />
+            <div className="group relative">
+              <button className="ml-1 grid size-10 place-items-center rounded-xl bg-[#243b67] text-xs font-bold text-white cursor-pointer" aria-label="Open account menu">{user.fullName.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()}</button>
+              <div className="invisible absolute right-0 top-12 w-56 rounded-xl border border-border bg-card p-2 opacity-0 shadow-xl transition group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100"><p className="px-2 py-1 text-sm font-bold">{user.fullName}</p><p className="px-2 pb-2 text-xs text-muted-foreground">{user.studentId} · {user.department}</p><button onClick={() => setActiveView('overview')} className="block w-full text-left rounded-lg px-2 py-2 text-sm font-semibold hover:bg-muted">Dashboard</button><button onClick={() => setActiveView('profile')} className="block w-full text-left rounded-lg px-2 py-2 text-sm font-semibold hover:bg-muted">Profile</button><button onClick={() => void onLogout()} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"><LogOut className="size-4" />Log out</button></div>
+            </div>
+          </div>
         </header>
         {notice && <div className="fixed right-5 top-24 z-50 flex items-center gap-2 rounded-xl bg-[#14223e] px-4 py-3 text-sm font-semibold text-white shadow-2xl"><Check className="size-4 text-[#f4ba42]" />{notice}</div>}
 
@@ -136,7 +161,18 @@ export function CampusApp({ user, onLogout, onUserUpdate, initialView = 'overvie
       </section>
       {editor && <RecordEditor system={editor.system} record={editor.record} onClose={() => setEditor(null)} onSave={save} />}
       {deleteTarget && <ConfirmDelete target={deleteTarget} close={() => setDeleteTarget(null)} confirm={() => void remove().catch((e) => setNotice(e.message))} />}
-      {bookingTarget && <BookingDialog room={bookingTarget} bookedBy={user.fullName} close={() => setBookingTarget(null)} confirm={async (args) => { await runAction('book_room', args, `Room ${String(bookingTarget.room_number ?? '')} booked.`); setBookingTarget(null); }} />}
+      {bookingTarget && <BookingDialog room={bookingTarget} bookedBy={user.fullName} close={() => setBookingTarget(null)} confirm={async (args) => { await runAction('book_room', args, `Room ${typeof bookingTarget.room_number === 'string' ? bookingTarget.room_number : ''} booked.`); setBookingTarget(null); }} />}
+      <CampusSearchDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        data={data}
+        onSelectResult={(targetView, record) => {
+          setActiveView(targetView);
+          if (targetView === 'rooms' && record) {
+            setBookingTarget(record);
+          }
+        }}
+      />
     </main>
   );
 }
@@ -172,11 +208,11 @@ function DataManager({ user, system, records, search, setSearch, add, edit, remo
     if (key === 'time') return `${formatTime(record.start_time)}–${formatTime(record.end_time)}`;
     if (key === 'equipment') return <div className="flex max-w-[260px] flex-wrap gap-1">{(record.equipment as string[]).slice(0,4).map((item) => <span key={item} className="rounded-md bg-muted px-1.5 py-1 text-[10px] font-semibold">{item}</span>)}</div>;
     if (key === 'bookings') return `${(record.bookings as unknown[]).length} active`;
-    if (key === 'registered') return `${String(record.registered ?? 0)}/${String(record.capacity ?? 0)}`;
+    if (key === 'registered') return `${typeof record.registered === 'number' ? record.registered : 0}/${typeof record.capacity === 'number' ? record.capacity : 0}`;
     if (key === 'priority' || key === 'status') return <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold uppercase ring-1 ${priorityClass(record[key])}`}>{titleCase(record[key])}</span>;
     if (['date','expires','deadline'].includes(key)) return formatDate(record[key]);
     if (key === 'marks') return `${typeof record[key] === 'number' ? record[key] : Number(record[key] ?? 0)} pts`;
-    if (key === 'name' || key === 'title') return <div className="max-w-[320px]"><p className="font-semibold text-foreground">{String(record[key] ?? '')}</p>{key === 'name' && <p className="mt-0.5 truncate text-xs text-muted-foreground">{String(record.organizer ?? '')}</p>}{system === 'announcements' && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{String(record.body ?? '')}</p>}</div>;
+    if (key === 'name' || key === 'title') return <div className="max-w-[320px]"><p className="font-semibold text-foreground">{typeof record[key] === 'string' ? record[key] : ''}</p>{key === 'name' && <p className="mt-0.5 truncate text-xs text-muted-foreground">{typeof record.organizer === 'string' ? record.organizer : ''}</p>}{system === 'announcements' && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{typeof record.body === 'string' ? record.body : ''}</p>}</div>;
     const val = record[key];
     return typeof val === 'string' || typeof val === 'number' ? String(val) : '—';
   };
@@ -223,8 +259,9 @@ function AgentPanel({ user, onMutation, externalPrompt, onClearExternalPrompt }:
 
 function RecordEditor({ system, record, onClose, onSave }: { system: SystemName; record?: CampusRecord; onClose: () => void; onSave: (system: SystemName, record: Record<string, unknown>, editing: boolean) => Promise<void> }) {
   const [values, setValues] = useState<Record<string, unknown>>(() => ({ ...(record || {}) })); const [saving, setSaving] = useState(false); const [error, setError] = useState('');
+  const toStrVal = (val: unknown, fallback = '') => typeof val === 'string' ? val : typeof val === 'number' ? val.toString() : fallback;
   const submit = async (event: SyntheticEvent) => { event.preventDefault(); setSaving(true); setError(''); try { await onSave(system, values, Boolean(record)); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to save'); setSaving(false); } };
-  return <Dialog open onOpenChange={(open) => !open && onClose()}><DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-[620px]"><DialogHeader><DialogTitle>{record ? 'Edit' : 'Add'} {singular[system].toLowerCase()}</DialogTitle><DialogDescription>Changes become the new truth for both the dashboard and agent.</DialogDescription></DialogHeader><form onSubmit={submit}><div className="grid gap-4 py-2 sm:grid-cols-2">{FIELDS[system].map((field) => <label key={field.key} className={`space-y-1.5 text-xs font-semibold ${field.type === 'textarea' ? 'sm:col-span-2' : ''}`}><span>{field.label}</span>{field.type === 'textarea' ? <Textarea required={field.required} value={String(values[field.key] ?? '')} onChange={(e) => setValues({ ...values, [field.key]: e.target.value })} className="min-h-24"/> : field.type === 'select' ? <NativeSelect className="w-full" value={String(values[field.key] ?? field.options?.[0] ?? '')} onChange={(e) => setValues({ ...values, [field.key]: e.target.value })}>{field.options?.map((option) => <NativeSelectOption key={option} value={option}>{titleCase(option)}</NativeSelectOption>)}</NativeSelect> : <Input required={field.required} type={field.type === 'tags' ? 'text' : field.type || 'text'} value={field.type === 'tags' && Array.isArray(values[field.key]) ? (values[field.key] as string[]).join(', ') : String(values[field.key] ?? '')} onChange={(e) => setValues({ ...values, [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value })}/>}</label>)}</div>{error && <p className="mt-2 flex items-center gap-2 text-sm text-red-600"><CircleAlert className="size-4"/>{error}</p>}<DialogFooter className="mt-4"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" disabled={saving}>{saving && <LoaderCircle className="animate-spin"/>}{record ? 'Save changes' : `Add ${singular[system].toLowerCase()}`}</Button></DialogFooter></form></DialogContent></Dialog>;
+  return <Dialog open onOpenChange={(open) => !open && onClose()}><DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-[620px]"><DialogHeader><DialogTitle>{record ? 'Edit' : 'Add'} {singular[system].toLowerCase()}</DialogTitle><DialogDescription>Changes become the new truth for both the dashboard and agent.</DialogDescription></DialogHeader><form onSubmit={submit}><div className="grid gap-4 py-2 sm:grid-cols-2">{FIELDS[system].map((field) => <label key={field.key} className={`space-y-1.5 text-xs font-semibold ${field.type === 'textarea' ? 'sm:col-span-2' : ''}`}><span>{field.label}</span>{field.type === 'textarea' ? <Textarea required={field.required} value={toStrVal(values[field.key])} onChange={(e) => setValues({ ...values, [field.key]: e.target.value })} className="min-h-24"/> : field.type === 'select' ? <NativeSelect className="w-full" value={toStrVal(values[field.key] ?? field.options?.[0])} onChange={(e) => setValues({ ...values, [field.key]: e.target.value })}>{field.options?.map((option) => <NativeSelectOption key={option} value={option}>{titleCase(option)}</NativeSelectOption>)}</NativeSelect> : <Input required={field.required} type={field.type === 'tags' ? 'text' : field.type || 'text'} value={field.type === 'tags' && Array.isArray(values[field.key]) ? (values[field.key] as string[]).join(', ') : toStrVal(values[field.key])} onChange={(e) => setValues({ ...values, [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value })}/>}</label>)}</div>{error && <p className="mt-2 flex items-center gap-2 text-sm text-red-600"><CircleAlert className="size-4"/>{error}</p>}<DialogFooter className="mt-4"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" disabled={saving}>{saving && <LoaderCircle className="animate-spin"/>}{record ? 'Save changes' : `Add ${singular[system].toLowerCase()}`}</Button></DialogFooter></form></DialogContent></Dialog>;
 }
 
 function ConfirmDelete({ target, close, confirm }: { target: { system: SystemName; record: CampusRecord }; close: () => void; confirm: () => void }) {
