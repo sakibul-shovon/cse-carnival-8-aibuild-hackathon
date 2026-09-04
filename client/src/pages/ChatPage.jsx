@@ -8,16 +8,16 @@ export default function ChatPage() {
       {/* Top Banner */}
       <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-md shadow-indigo-600/30">
-              <Bot className="w-5 h-5" />
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-cyan-500 text-white shadow-lg shadow-indigo-500/25">
+              <Sparkles className="w-5 h-5 text-amber-300" />
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              AI Student Assistant & Tool Orchestrator
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+              CampusCopilot <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-500/20 to-indigo-500/20 text-indigo-300 border border-indigo-500/30">AI</span>
             </h1>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Real-time tool-calling interface powered by live database integration and reasoning algorithms.
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">
+            Your smart university copilot — instant routines, room booking, event RSVPs & live campus intelligence.
           </p>
         </div>
 

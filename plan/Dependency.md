@@ -47,10 +47,10 @@ We have ~3 hours. Speed over cleanliness. Rules:
 - [x] ~~**[F-3]** Add/edit/delete forms wired for all 5 resources — *Member 1* `[Blocked by: B-4]` `[Unblocks: F-4]`~~
 
 ### Member 3 (AI Agent) — build against mock, swap to real the moment B-3 lands
-- [ ] **[G-1]** Scaffold agent, define read-tool schemas against mock shape from X-2 — *Member 3* `[Unblocks: G-2]`
-- [ ] **[G-2]** Real tool calling for simple lookups (schedule, assignments, announcements, events) — *Member 3* `[Blocked by: B-3]` `[Unblocks: G-3]`
-- [ ] **[G-3]** Wire `get_current_datetime` to `/api/meta/now`, verify "today"/"tomorrow" resolve — *Member 3* `[Blocked by: B-5]`
-- [ ] **[G-4]** `search_rooms` tool for the multi-filter query ("projector, fits 30") — *Member 3* `[Blocked by: B-3]`
+- [x] ~~**[G-1]** Scaffold agent, define read-tool schemas against mock shape from X-2 — *Member 3* `[Unblocks: G-2]`~~
+- [x] ~~**[G-2]** Real tool calling for simple lookups (schedule, assignments, announcements, events) — *Member 3* `[Blocked by: B-3]` `[Unblocks: G-3]`~~
+- [x] ~~**[G-3]** Wire `get_current_datetime` to `/api/meta/now`, verify "today"/"tomorrow" resolve — *Member 3* `[Blocked by: B-5]`~~
+- [x] ~~**[G-4]** `search_rooms` tool for the multi-filter query ("projector, fits 30") — *Member 3* `[Blocked by: B-3]`~~
 
 ---
 
@@ -66,18 +66,18 @@ We have ~3 hours. Speed over cleanliness. Rules:
 - [x] ~~**[F-6]** Chat widget shell: text box, message list, POST to `/api/agent/chat` — *Member 1* `[Unblocks: F-7]`~~
 
 ### Member 3
-- [ ] **[G-5]** `book_room` tool tested against real conflict logic — 409 relayed in plain language — *Member 3* `[Blocked by: B-6]`
-- [ ] **[G-6]** `register_for_event` tool tested against real capacity logic — *Member 3* `[Blocked by: B-7]`
-- [ ] **[G-7]** Fully-specified booking query works without asking ("Book 7A02 tomorrow 3–5") — *Member 3* `[Blocked by: G-5]`
-- [ ] **[G-8]** **The one they will definitely test:** "Just book me any room tomorrow afternoon" → agent asks a clarifying question, fires **zero** write calls — *Member 3* `[Blocked by: G-5]` — **do not skip this, it's an explicit grading trap**
-- [ ] **[G-9]** One refusal path working (e.g. "book it anyway even though it's full," or "delete all announcements") — *Member 3* `[Blocked by: G-5, G-6]`
+- [x] ~~**[G-5]** `book_room` tool tested against real conflict logic — 409 relayed in plain language — *Member 3* `[Blocked by: B-6]`~~
+- [x] ~~**[G-6]** `register_for_event` tool tested against real capacity logic — *Member 3* `[Blocked by: B-7]`~~
+- [x] ~~**[G-7]** Fully-specified booking query works without asking ("Book 7A02 tomorrow 3–5") — *Member 3* `[Blocked by: G-5]`~~
+- [x] ~~**[G-8]** **The one they will definitely test:** "Just book me any room tomorrow afternoon" → agent asks a clarifying question, fires **zero** write calls — *Member 3* `[Blocked by: G-5]` — **do not skip this, it's an explicit grading trap**~~
+- [x] ~~**[G-9]** One refusal path working (e.g. "book it anyway even though it's full," or "delete all announcements") — *Member 3* `[Blocked by: G-5, G-6]`~~
 
 ---
 
 ## ⏱️ 2:15–2:50 — Final 35 Minutes: Wire It Together, No New Features
 
 - [x] ~~**[F-7]** Chat renders clarifying questions and action-confirmation replies as normal messages — *Member 1* `[Blocked by: F-6, G-2]`~~
-- [ ] **[X-3]** **Live-data smoke test:** one person edits a record in the dashboard, immediately asks the agent about it, confirms the answer updated — *All* `[Blocked by: F-3, G-2]` **← do this now, not at the end, so there's time left to fix it if it fails**
+- [x] ~~**[X-3]** **Live-data smoke test:** one person edits a record in the dashboard, immediately asks the agent about it, confirms the answer updated — *All* `[Blocked by: F-3, G-2]` **← do this now, not at the end, so there's time left to fix it if it fails**~~
 - [ ] **[X-4]** Each member runs their 2–3 assigned `sample_queries.md` lines once, live, exactly as the judges will — *All*
 - [x] ~~**[X-5]** Kill any obviously broken console errors / blank screens on the main flows only — *Member 1*~~
 

@@ -24,7 +24,7 @@ const NAV_ITEMS = [
   { path: '/events', label: 'Events', icon: PartyPopper, desc: 'Hackathons & registrations' },
   { path: '/announcements', label: 'Announcements', icon: Megaphone, desc: 'Notices & advisories' },
   { path: '/assignments', label: 'Assignments', icon: BookOpenCheck, desc: 'Tasks & deadlines' },
-  { path: '/chat', label: 'Agent Chat', icon: BotMessageSquare, desc: 'AI assistant & live actions', highlight: true },
+  { path: '/chat', label: 'CampusCopilot', icon: BotMessageSquare, desc: 'AI Copilot & live actions', highlight: true },
 ];
 
 export default function Layout() {
