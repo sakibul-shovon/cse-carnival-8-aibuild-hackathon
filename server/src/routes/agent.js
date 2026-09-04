@@ -2,8 +2,10 @@ import express from 'express';
 
 const router = express.Router();
 
+import { chat } from '../agent/index.js';
+
 // POST /api/agent/chat
-// Scaffold endpoint for Member 3's AI Agent implementation
+// AI Agent endpoint with tool-calling and reasoning
 router.post('/chat', async (req, res, next) => {
   try {
     const { message, history = [] } = req.body;
@@ -14,12 +16,8 @@ router.post('/chat', async (req, res, next) => {
       });
     }
 
-    // Default scaffold response until Member 3 attaches LLM tool orchestrator
-    res.json({
-      reply: `[CampusOS Agent Scaffold] Received: "${message}". Ready for Member 3 LLM tool integration.`,
-      actions_taken: [],
-      history: [...history, { role: 'user', content: message }]
-    });
+    const response = await chat(message, history);
+    res.json(response);
   } catch (err) {
     next(err);
   }
