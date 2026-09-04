@@ -1,0 +1,22 @@
+[
+  {
+    "id": "usr-001",
+    "student_id": "20-40532",
+    "name": "Sakibul Hassan",
+    "department": "CSE",
+    "role": "student",
+    "enrollments": [
+      { "course": "CSE 4113", "section": "B" },
+      { "course": "CSE 4114", "section": "B1/B2" },
+      { "course": "CSE 4129", "section": "B" },
+      { "course": "CSE 4130", "section": "B1/B2" },
+      { "course": "CSE 4137", "section": "B" },
+      { "course": "CSE 4138", "section": "B1/B2" },
+      { "course": "CSE 4141", "section": "DWM" },
+      { "course": "CSE 4142", "section": "DWMGr-1" },
+      { "course": "CSE 4173", "section": "CS" },
+      { "course": "CSE 4174", "section": "CSGr-1" },
+      { "course": "IPE 4111", "section": "B" }
+    ]
+  }
+]
