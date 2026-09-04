@@ -425,7 +425,6 @@ export default function AuthPage() {
                   >
                     <option value="Student">Student</option>
                     <option value="Faculty">Faculty</option>
-                    <option value="Club Organizer">Club Organizer</option>
                   </select>
                 </div>
               </div>

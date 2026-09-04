@@ -203,6 +203,9 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const isFaculty = user?.role?.toLowerCase() === 'faculty';
+  const isStudent = user?.role?.toLowerCase() === 'student';
+
   return (
     <AuthContext.Provider
       value={{
@@ -210,6 +213,8 @@ export function AuthProvider({ children }) {
         token,
         loading,
         isAuthenticated: Boolean(user),
+        isFaculty,
+        isStudent,
         login,
         register,
         logout,
