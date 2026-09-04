@@ -28,10 +28,11 @@ campusos/
 ├── PROBLEM_STATEMENT.md         ← organizer-provided brief
 ├── schema.md                    ← organizer-provided field reference
 ├── sample_queries.md            ← organizer-provided judging queries
-│
-├── MEMBER1_FRONTEND.md          ← Member 1: React dashboard + chat UI
-├── MEMBER2_BACKEND.md           ← Member 2: Express API + Supabase
-├── MEMBER3_AI_AGENT.md          ← Member 3: AI agent + tool calling
+├── plan/
+│   ├── PLAN.md                  ← Unified team implementation plan
+│   ├── Member1.md               ← Member 1: React dashboard + chat UI
+│   ├── Member2.md               ← Member 2: Express API + Supabase
+│   └── Member3.md               ← Member 3: AI agent + tool calling
 │
 ├── data/                        ← seed data (loaded into Supabase once, on setup)
 │   ├── schedules.json
@@ -78,7 +79,7 @@ campusos/
 - **Member 2 (Backend)** builds the Express API and Supabase schema that both the dashboard and the agent depend on — including the booking/registration business logic (conflict checks, capacity checks).
 - **Member 3 (AI Agent)** builds the tool-calling layer that lets the LLM call Member 2's API to answer questions and take actions, with correct behavior on vague or unauthorized requests.
 
-Work can start in parallel once the API contract (routes + request/response shapes) in `MEMBER2_BACKEND.md` is agreed on — Member 1 and Member 3 can build against a mocked version of that contract before the real backend is ready.
+Work can start in parallel once the API contract (routes + request/response shapes) in `plan/Member2.md` is agreed on — Member 1 and Member 3 can build against a mocked version of that contract before the real backend is ready.
 
 ---
 
@@ -112,7 +113,7 @@ A suggested build order — each milestone should end with something demoable, n
 
 | # | Milestone | Owner(s) | Exit Criteria |
 |---|---|---|---|
-| M1 | API contract agreed + repo scaffolded | All | Routes/request-response shapes in `MEMBER2_BACKEND.md` finalized; `client/` and `server/` skeletons pushed |
+| M1 | API contract agreed + repo scaffolded | All | Routes/request-response shapes in `plan/Member2.md` finalized; `client/` and `server/` skeletons pushed |
 | M2 | Supabase schema live + seed script working | Member 2 | All 5 tables created; `npm run seed` loads `data/*.json` into Supabase idempotently |
 | M3 | Core CRUD API complete | Member 2 | GET/POST/PUT/DELETE working for all 5 resources, verified with Postman/curl |
 | M4 | Dashboard — read + list views | Member 1 | All 5 sections render live data from the API, no manual refresh needed |
