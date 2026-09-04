@@ -116,7 +116,7 @@
     "day": "Tuesday",
     "start_time": "08:00",
     "end_time": "08:50",
-    "room": "7C07",
+    "room": "7C05",
     "instructor": "TBA",
     "section": "B"
   },
@@ -127,7 +127,7 @@
     "day": "Tuesday",
     "start_time": "08:50",
     "end_time": "09:40",
-    "room": "7C07",
+    "room": "7C05",
     "instructor": "TBA",
     "section": "B"
   },
@@ -215,7 +215,7 @@
     "day": "Thursday",
     "start_time": "11:20",
     "end_time": "13:00",
-    "room": "9A05",
+    "room": "7B07",
     "instructor": "Ms. Nawrin Tabassum",
     "section": "CSGr-1"
   },

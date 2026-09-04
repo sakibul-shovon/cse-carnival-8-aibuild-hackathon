@@ -1,0 +1,29 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: campusos-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-campusos}
+      MYSQL_USER: ${MYSQL_USER:-campusos}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-campusos_dev_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-campusos_root_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - campusos_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-campusos_root_password}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - campusos
+
+volumes:
+  campusos_mysql_data:
+
+networks:
+  campusos:
+    driver: bridge

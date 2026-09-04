@@ -1,102 +1,128 @@
-# CampusOS — AI Build Hackathon
+# CampusOS
 
-An intelligent university platform powered by an AI agent that understands and acts on real-time campus data.
+CampusOS is an AI-powered campus intelligence platform that unifies schedules, rooms, assignments, events, and announcements behind a typed API and an OpenAI tool-calling assistant.
 
----
+## Architecture
 
-## The Challenge
+This repository is an npm workspace with strict runtime boundaries:
 
-Students struggle daily with scattered campus information — class changes buried in group chats, deadlines forgotten until the last minute, no easy way to know what's happening on campus right now.
-
-Your job: build **CampusOS** — a two-part app with a data dashboard and an AI agent that always reads live data.
-
-Read the full problem statement → [`PROBLEM_STATEMENT.md`](./PROBLEM_STATEMENT.md)
-
----
-
-## Repository Structure
-
-```
-campusos-hackathon/
-│
-├── README.md                    ← You are here
-├── PROBLEM_STATEMENT.md         ← Full problem statement + scoring
-├── SUBMISSION.md                ← How and where to submit
-│
-├── data/                        ← Seed data (load these into your backend)
-│   ├── schedules.json
-│   ├── rooms.json
-│   ├── events.json
-│   ├── announcements.json
-│   └── assignments.json
-│
-├── schema/
-│   └── schema.md                ← Field names, types, and constraints for all 5 systems
-│
-└── sample_queries/
-    └── sample_queries.md        ← Queries we will use when judging your agent
+```text
+.
+├── backend/            Express + TypeScript API, service layer, and AI orchestration
+├── database/           Prisma schema, migrations, seed fixtures, and seed runner
+├── docs/               Architecture, database, API, and AI design decisions
+├── frontend/           Next.js + TypeScript + Tailwind + Shadcn-style UI
+└── tests/              Backend and frontend verification suites
 ```
 
----
+Backend feature dependencies point inward:
 
-## How to Participate
-
-### 1. Fork the repository
-
-Click **Fork** in the top-right corner of this repo's GitHub page. This creates your own copy under your GitHub account, where you'll build your solution.
-
-### 2. Clone your fork
-
-```bash
-git clone https://github.com/YOUR_USERNAME/campusos-hackathon.git
-cd campusos-hackathon
+```text
+HTTP route → validation → controller → service → model/repository → Prisma → MySQL
+                                      ↑
+OpenAI agent → function tool ─────────┘
 ```
 
-### 3. Build your solution inside your fork
+The AI layer cannot import the database client. Its five allowlisted tools call the same services used by the REST API.
 
-> Your solution lives in your fork — do not open a pull request to this repo.
+## Prerequisites
 
-### 4. Making your fork private
+- Node.js 20+
+- npm 10+
+- Docker Desktop or another Docker Compose runtime
+- An OpenAI API key for the AI assistant (the rest of the application works without one)
 
-By default, a fork is public. If you want to keep your work hidden from other participants while you build:
+## Local setup
 
-1. Go to your fork on GitHub
-2. Open **Settings** (top of the repo page)
-3. Scroll to the **Danger Zone** at the bottom
-4. Click **Change repository visibility** → **Make private**
-5. Confirm by typing the repository name
+1. Copy the environment template:
 
-> **You may keep your fork private during the hackathon period, but it must be switched back to public by 8:30 PM on the submission deadline.** Repositories still private after that time will not be judged. To make it public again, repeat the steps above and choose **Make public** instead.
+   ```bash
+   cp .env.example .env
+   ```
 
-### 5. Submit
+   On PowerShell:
 
-Submit your fork's public URL via the instructions in [`SUBMISSION.md`](./SUBMISSION.md).
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
----
+2. Install workspace dependencies:
 
-## Quick Links
+   ```bash
+   npm install
+   ```
 
-| Resource | Link |
-|----------|------|
-| Full problem statement | [`PROBLEM_STATEMENT.md`](./PROBLEM_STATEMENT.md) |
-| Data schema | [`schema/schema.md`](./schema/schema.md) |
-| Sample agent queries | [`sample_queries/sample_queries.md`](./sample_queries/sample_queries.md) |
-| Submission guide | [`SUBMISSION.md`](./SUBMISSION.md) |
+3. Start MySQL and wait for its health check:
 
----
+   ```bash
+   docker compose up -d mysql
+   docker compose ps
+   ```
 
-## Seed Data Overview
+4. Generate the Prisma client, apply migrations, and load demo data:
 
-| File | Records | What It Contains |
-|------|---------|-----------------|
-| `schedules.json` | 24 | Class timetable — course, day, time, room, instructor |
-| `rooms.json` | 20 | Rooms 7A01–7A07, 7B01–7B08, 7C01–7C05 with equipment and bookings |
-| `events.json` | 7 | Campus events with registration lists |
-| `announcements.json` | 8 | Notices with priority levels and expiry dates |
-| `assignments.json` | 8 | Course assignments with deadlines and submission status |
+   ```bash
+   npm run db:generate
+   npm run db:migrate
+   npm run db:seed
+   ```
 
-> **Important:** These JSON files are only the starting/seed data — not the database itself. Load them into a real backend (a database, or at minimum a backend service with persistent storage) on app startup. Your dashboard and AI agent must both read from and write to that backend, not the static JSON files directly. If you add, edit, or delete a record, the change must be saved in your backend and still be there after a reload — the JSON files in this repo will not update. The agent is also expected to always query the current backend state, not a cached or hardcoded copy of the seed data.
+5. Start the frontend and backend together:
 
----
+   ```bash
+   npm run dev
+   ```
 
-Good luck. Build something that actually works.
+Open the dashboard at [http://localhost:3000](http://localhost:3000). The API listens at `http://localhost:4000`; its health endpoint is `GET /health`.
+
+## Environment variables
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `DATABASE_URL` | Prisma MySQL connection string | Docker Compose credentials |
+| `BACKEND_PORT` | Express listen port | `4000` |
+| `FRONTEND_URL` | Allowed browser origin | `http://localhost:3000` |
+| `NEXT_PUBLIC_API_URL` | Browser-visible API base URL | `http://localhost:4000/api/v1` |
+| `OPENAI_API_KEY` | Enables the AI assistant | empty |
+| `OPENAI_MODEL` | Responses API model ID | `gpt-5-mini` |
+| `DEV_USER_ID` | Local request identity fallback | `20-40532` |
+
+Never commit `.env` or API keys. Production deployments should replace the development identity header with a verified identity provider.
+
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Run both workspaces in watch mode |
+| `npm run build` | Build the API and Next.js application |
+| `npm run typecheck` | Type-check both workspaces |
+| `npm test` | Run backend and frontend tests |
+| `npm run db:migrate` | Create/apply a development Prisma migration |
+| `npm run db:seed` | Reset and load deterministic hackathon fixtures |
+| `npm run db:studio` | Open Prisma Studio |
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Database design](docs/database-design.md)
+- [API documentation](docs/api-documentation.md)
+- [AI agent design](docs/ai-agent-design.md)
+- [Sample evaluation queries](docs/sample-queries.md)
+
+## API conventions
+
+Successful responses use one envelope:
+
+```json
+{
+  "success": true,
+  "data": {},
+  "message": "Operation successful"
+}
+```
+
+Errors use the same top-level shape with `success: false`, `data: null`, and a stable `error.code`. See [API documentation](docs/api-documentation.md) for routes and examples.
+
+## License
+
+See [LICENSE](LICENSE).
