@@ -39,6 +39,11 @@ const SAMPLE_QUERIES = [
     icon: Zap,
   },
   {
+    category: 'Events',
+    text: 'What are the upcoming events on campus?',
+    icon: PartyPopper,
+  },
+  {
     category: 'Multi-Source',
     text: "I'm free until 2 PM — is there anything on campus I could drop into?",
     icon: Sparkles,
@@ -68,7 +73,7 @@ const SAMPLE_QUERIES = [
 const INITIAL_GREETING = {
   role: 'assistant',
   content:
-    "👋 Hello! I'm your **CampusOS AI Assistant**. I can look up live schedules, find free labs with projectors, list pending assignments, announce campus advisories, and book rooms or register you for events in real time.\n\n*What would you like to explore today?*",
+    "👋 Hey there! I'm **CampusCopilot** — your real-time university AI.\n\nI can check live class routines, list upcoming workshops & hackathons, find free labs with projectors, track assignments, reserve study rooms, and register you for events in real time.\n\n*What would you like to explore today?*",
   timestamp: 'Just now',
 };
 
