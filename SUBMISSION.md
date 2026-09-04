@@ -40,7 +40,7 @@ Before submitting, confirm:
 
 ## Deadline
 
-> **[To be announced by organizers]**
+> **8.30pm, 4 September**
 
 Late submissions will not be accepted.
 
