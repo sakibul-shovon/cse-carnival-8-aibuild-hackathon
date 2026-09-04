@@ -174,14 +174,25 @@ export default function AuthPage() {
     }
   };
 
-  const handleQuickDemo = (role) => {
-    const demoUser = loginAsDemo(role);
-    addToast({
-      type: 'info',
-      title: `Logged in as ${role}`,
-      message: `Active session: ${demoUser.name} (${demoUser.student_id})`,
-    });
-    navigate('/schedules');
+  const handleQuickDemo = async (role) => {
+    setIsLoading(true);
+    try {
+      const demoUser = await loginAsDemo(role);
+      addToast({
+        type: 'info',
+        title: `Logged in as ${role}`,
+        message: `Active session: ${demoUser.name} (${demoUser.student_id})`,
+      });
+      navigate('/schedules');
+    } catch (err) {
+      addToast({
+        type: 'error',
+        title: 'Demo Sign-In Failed',
+        message: err.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
