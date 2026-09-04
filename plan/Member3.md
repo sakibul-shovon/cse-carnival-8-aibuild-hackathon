@@ -86,10 +86,10 @@ Give every tool a precise JSON-schema description (types, required fields, enums
 
 ## Deliverables Checklist
 
-- [ ] Tool definitions for every read/write endpoint Member 2 exposes, with tight JSON schemas
-- [ ] `get_current_datetime` used for every relative date/time resolution
-- [ ] All `sample_queries.md` queries handled correctly, including the two multi-source ones
-- [ ] "Just book me any room tomorrow afternoon" correctly triggers a clarifying question, no booking
-- [ ] At least one clear refusal path for an unauthorized/out-of-scope request
-- [ ] Verified live-edit behavior: change a record via the dashboard, immediately ask the agent, get the updated answer
-- [ ] Errors from the backend (conflicts, capacity) relayed to the user in plain language
+- [x] Tool definitions for every read/write endpoint Member 2 exposes, with tight JSON schemas
+- [x] `get_current_datetime` used for every relative date/time resolution
+- [x] All `sample_queries.md` queries handled correctly, including the two multi-source ones
+- [x] "Just book me any room tomorrow afternoon" correctly triggers a clarifying question, no booking
+- [x] At least one clear refusal path for an unauthorized/out-of-scope request
+- [x] Verified live-edit behavior: change a record via the dashboard, immediately ask the agent, get the updated answer
+- [x] Errors from the backend (conflicts, capacity) relayed to the user in plain language
