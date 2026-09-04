@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
 import {
   Calendar,
   Building2,
@@ -12,14 +12,14 @@ import {
   Layers,
   Menu,
   X,
-  Radio,
+  Home,
 } from 'lucide-react';
 import { api } from '../api/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from './Toast';
 
 const NAV_ITEMS = [
-  { path: '/', label: 'Schedules', icon: Calendar, desc: 'Class routines & slots' },
+  { path: '/schedules', label: 'Schedules', icon: Calendar, desc: 'Class routines & slots' },
   { path: '/rooms', label: 'Rooms', icon: Building2, desc: 'Classrooms, labs & booking' },
   { path: '/events', label: 'Events', icon: PartyPopper, desc: 'Hackathons & registrations' },
   { path: '/announcements', label: 'Announcements', icon: Megaphone, desc: 'Notices & advisories' },
@@ -49,12 +49,12 @@ export default function Layout() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row">
       {/* Mobile Top Header */}
       <div className="md:hidden flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40">
-        <div className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <span className="font-extrabold tracking-tight text-white text-lg">CampusOS</span>
-        </div>
+        </Link>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800"
@@ -71,24 +71,33 @@ export default function Layout() {
       >
         {/* Logo / Brand Header */}
         <div className="p-6 hidden md:flex items-center justify-between border-b border-slate-800/60">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-600/30">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-transform">
               <Layers className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="font-extrabold tracking-tight text-white text-lg leading-tight flex items-center gap-1.5">
                 CampusOS
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                  v8.0
+                  AUST
                 </span>
               </div>
               <p className="text-xs text-slate-400">Campus Intelligence</p>
             </div>
-          </div>
+          </Link>
         </div>
 
-        {/* Navigation Links */}
+        {/* Home Link & Navigation Links */}
         <div className="p-4 flex-1 space-y-1.5 overflow-y-auto">
+          <Link
+            to="/"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800 transition mb-2"
+          >
+            <Home className="w-4 h-4 text-indigo-400" />
+            <span>← Back to Landing Page</span>
+          </Link>
+
           <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Campus Systems
           </div>
