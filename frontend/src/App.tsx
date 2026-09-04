@@ -13,6 +13,8 @@ import { announcements, assignments, events, schedules } from './data/mockData'
 import { AnnouncementsPage, AssignmentsPage, EventsPage, RoomsPage, SchedulePage } from './pages/ManagementPages'
 import { AssistantPage } from './pages/AssistantPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { AuthProvider, useAuth } from './auth/AuthContext'
+import { LoginPage, RegisterPage } from './pages/AuthPages'
 import './App.css'
 
 const titles: Record<string, string> = { '/dashboard': 'Dashboard', '/schedule': 'Schedule', '/rooms': 'Rooms', '/events': 'Events', '/announcements': 'Announcements', '/assignments': 'Assignments', '/ai-assistant': 'AI Assistant', '/settings': 'Settings' }
@@ -28,12 +30,15 @@ function Dashboard() {
 
 function AppShell() {
   const location = useLocation()
+  const { user, loading } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('campusos-theme') === 'dark')
   const title = titles[location.pathname] ?? 'Dashboard'
   useEffect(() => { localStorage.setItem('campusos-theme', darkMode ? 'dark' : 'light') }, [darkMode])
 
+  if (loading) return <div className="auth-loading">Loading CampusOS...</div>
+  if (!user) return <Routes><Route path="/register" element={<RegisterPage />} /><Route path="*" element={<LoginPage />} /></Routes>
   return <div className={`app-shell ${darkMode ? 'dark-theme' : ''}`}><Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />{menuOpen && <button className="scrim" onClick={() => setMenuOpen(false)} aria-label="Close menu" />}<main className="main-content"><TopBar title={title} onMenu={() => setMenuOpen(true)} darkMode={darkMode} onToggleTheme={() => setDarkMode((current) => !current)} /><div className="content-wrap"><Routes><Route path="/dashboard" element={<Dashboard />} /><Route path="/schedule" element={<SchedulePage />} /><Route path="/rooms" element={<RoomsPage />} /><Route path="/events" element={<EventsPage />} /><Route path="/announcements" element={<AnnouncementsPage />} /><Route path="/assignments" element={<AssignmentsPage />} /><Route path="/ai-assistant" element={<AssistantPage />} /><Route path="/settings" element={<SettingsPage />} /><Route path="*" element={<Navigate to="/dashboard" replace />} /></Routes></div></main></div>
 }
 
-export default function App() { return <BrowserRouter><AppShell /></BrowserRouter> }
+export default function App() { return <BrowserRouter><AuthProvider><AppShell /></AuthProvider></BrowserRouter> }

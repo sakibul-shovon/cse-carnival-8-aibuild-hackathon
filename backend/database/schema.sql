@@ -11,6 +11,29 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
+IF OBJECT_ID(N'dbo.Users', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Users
+    (
+        id              VARCHAR(50)    NOT NULL,
+        name            NVARCHAR(150)  NOT NULL,
+        email           VARCHAR(254)   NOT NULL,
+        student_id      VARCHAR(50)    NULL,
+        password_hash   VARCHAR(255)   NOT NULL,
+        role            VARCHAR(20)    NOT NULL,
+        created_at      DATETIME2(0)   NOT NULL CONSTRAINT DF_Users_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        CONSTRAINT PK_Users PRIMARY KEY (id),
+        CONSTRAINT UQ_Users_Email UNIQUE (email),
+        CONSTRAINT UQ_Users_StudentId UNIQUE (student_id),
+        CONSTRAINT CK_Users_Role CHECK (role IN ('student', 'admin'))
+    );
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Users_Role' AND object_id = OBJECT_ID(N'dbo.Users'))
+    CREATE INDEX IX_Users_Role ON dbo.Users (role);
+GO
+
 IF OBJECT_ID(N'dbo.Rooms', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Rooms

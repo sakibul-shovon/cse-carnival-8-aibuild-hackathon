@@ -1,6 +1,12 @@
 USE CampusOS;
 GO
 
+/* Development admin account. Password is supplied out-of-band, never stored as plaintext. */
+INSERT INTO dbo.Users (id, name, email, student_id, password_hash, role)
+SELECT 'usr-admin-001', 'CampusOS Administrator', 'admin@campusos.local', NULL, '$2b$12$ZlVW5ePSgelplxvUr1O8QuVQbbJ/yqtrW3m1fA3SmvHXGXESe1.oC', 'admin'
+WHERE NOT EXISTS (SELECT 1 FROM dbo.Users WHERE email = 'admin@campusos.local');
+GO
+
 /* Rooms */
 INSERT INTO dbo.Rooms (id, room_number, [type], capacity, floor, [status])
 SELECT source.id, source.room_number, source.[type], source.capacity, source.floor, source.[status]

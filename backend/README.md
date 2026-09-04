@@ -11,6 +11,8 @@ npm run dev
 
 The server starts on `http://localhost:4000` by default. The health check is available at `/health`.
 
+Authentication endpoints are `POST /api/auth/register`, `POST /api/auth/login`, and `GET /api/auth/me`. Registration creates student accounts only. The seeded development admin is `admin@campusos.local` with password `CampusOSAdmin2026!`; change this password before production use.
+
 The API reads the current CampusOS database for campus data. The assistant endpoint is `POST /api/ai/chat`; it requires `GEMINI_API_KEY` in `.env` and uses Gemini model-selected function calls to execute database tools.
 
 Database configuration is read from `.env`. Keep real credentials local and use `.env.example` as the template.
