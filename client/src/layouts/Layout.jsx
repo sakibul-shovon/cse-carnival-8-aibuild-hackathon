@@ -1,8 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, 
+  BookOpen,
   CalendarDays, 
   DoorClosed, 
   Sparkles, 
@@ -19,6 +20,7 @@ import {
 
 const navigation = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },
+  { name: 'Courses', href: '/courses', icon: BookOpen },
   { name: 'Schedules', href: '/schedules', icon: CalendarDays },
   { name: 'Rooms', href: '/rooms', icon: DoorClosed },
   { name: 'Events', href: '/events', icon: Sparkles },
@@ -31,7 +33,7 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isTeacher, isStudent } = useAuth();
 
   const handleLogout = async () => {
     await logout();
@@ -129,7 +131,7 @@ export default function Layout() {
         <div className="p-4 border-t border-slate-100 space-y-3">
           <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs text-white shadow-xs ${
-              isAdmin ? 'bg-emerald-600 shadow-emerald-600/20' : 'bg-indigo-600 shadow-indigo-600/20'
+              isAdmin ? 'bg-emerald-600 shadow-emerald-600/20' : isTeacher ? 'bg-amber-600 shadow-amber-600/20' : 'bg-indigo-600 shadow-indigo-600/20'
             }`}>
               {getInitials(user?.name)}
             </div>
@@ -137,7 +139,7 @@ export default function Layout() {
               <p className="text-xs font-bold text-slate-800 truncate">{user?.name || 'Campus User'}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                  isAdmin ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'
+                  isAdmin ? 'bg-emerald-100 text-emerald-800' : isTeacher ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'
                 }`}>
                   {isAdmin ? <Shield className="w-2.5 h-2.5" /> : <UserCheck className="w-2.5 h-2.5" />}
                   {user?.role || 'student'}
@@ -170,7 +172,7 @@ export default function Layout() {
               Simulated Date: <span className="font-bold text-indigo-600">Sep 4, 2026</span>
             </div>
             <div className={`text-xs px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider flex items-center gap-1.5 ${
-              isAdmin ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+              isAdmin ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : isTeacher ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
             }`}>
               {isAdmin ? <Shield className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
               <span>{user?.role} Mode</span>

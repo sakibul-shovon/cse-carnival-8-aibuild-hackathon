@@ -24,9 +24,17 @@ class RoleMiddleware
             ], 401);
         }
 
-        if (!in_array($user->role, $roles)) {
+        // Expand any comma-separated roles
+        $allowedRoles = [];
+        foreach ($roles as $r) {
+            foreach (explode(',', $r) as $subRole) {
+                $allowedRoles[] = trim($subRole);
+            }
+        }
+
+        if (!in_array($user->role, $allowedRoles)) {
             return response()->json([
-                'message' => 'Forbidden. You do not have permission to perform this action (Admin access required).'
+                'message' => 'Forbidden. You do not have permission to perform this action.'
             ], 403);
         }
 

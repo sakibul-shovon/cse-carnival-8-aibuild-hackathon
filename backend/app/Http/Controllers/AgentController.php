@@ -24,9 +24,10 @@ class AgentController extends Controller
 
         $message = $validated['message'];
         $history = $validated['history'] ?? [];
-        $role = $request->user()?->role ?? 'student';
+        $user = $request->user();
+        $role = $user?->role ?? 'student';
 
-        $result = $this->agentService->processQuery($message, $history, $role);
+        $result = $this->agentService->processQuery($message, $history, $role, $user);
 
         return response()->json($result);
     }

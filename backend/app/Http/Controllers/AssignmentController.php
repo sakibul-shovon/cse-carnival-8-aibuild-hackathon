@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Assignment;
+use App\Models\Course;
+use App\Models\CourseEnrollment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -11,6 +13,7 @@ class AssignmentController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
         $query = Assignment::query();
 
         if ($request->filled('status')) {
@@ -19,6 +22,28 @@ class AssignmentController extends Controller
 
         if ($request->filled('course')) {
             $query->where('course', 'like', '%' . $request->query('course') . '%');
+        }
+
+        // For student, optionally filter by enrolled courses if requested
+        if ($user && $user->role === 'student' && $request->boolean('enrolled_only')) {
+            $enrolledCourses = CourseEnrollment::where('student_id', $user->id)
+                ->where('status', 'enrolled')
+                ->with('course:id,course_code')
+                ->get()
+                ->pluck('course.course_code')
+                ->filter()
+                ->toArray();
+
+            $query->whereIn('course', $enrolledCourses);
+        }
+
+        // For teacher, optionally filter by my courses if requested
+        if ($user && $user->role === 'teacher' && $request->boolean('my_courses_only')) {
+            $teacherCourses = Course::where('teacher_id', $user->id)->pluck('course_code')->toArray();
+            $query->where(function ($q) use ($user, $teacherCourses) {
+                $q->where('teacher_id', $user->id)
+                  ->orWhereIn('course', $teacherCourses);
+            });
         }
 
         if ($request->filled('search')) {
@@ -45,6 +70,12 @@ class AssignmentController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        if (!in_array($user->role, ['admin', 'teacher'])) {
+            return response()->json(['message' => 'Forbidden. Teacher or Admin access required.'], 403);
+        }
+
         $validated = $request->validate([
             'id' => 'nullable|string',
             'course' => 'required|string',
@@ -57,6 +88,20 @@ class AssignmentController extends Controller
             'status' => 'nullable|string|in:pending,submitted,graded,late',
             'marks' => 'nullable|integer',
         ]);
+
+        // If Teacher, verify teacher owns this course (if course exists in courses table)
+        if ($user->role === 'teacher') {
+            $course = Course::where('course_code', $validated['course'])
+                ->orWhere('id', $validated['course'])
+                ->first();
+
+            if ($course && $course->teacher_id && $course->teacher_id != $user->id) {
+                return response()->json([
+                    'message' => "Forbidden. You cannot create an assignment for another teacher's course ({$course->course_code})."
+                ], 403);
+            }
+            $validated['teacher_id'] = $user->id;
+        }
 
         if (empty($validated['id'])) {
             $validated['id'] = 'asgn-' . Str::padLeft(Assignment::count() + 1, 3, '0');
@@ -74,9 +119,25 @@ class AssignmentController extends Controller
 
     public function update(Request $request, string $id): JsonResponse
     {
+        $user = $request->user();
         $assignment = Assignment::find($id);
         if (!$assignment) {
             return response()->json(['message' => 'Assignment not found'], 404);
+        }
+
+        if (!in_array($user->role, ['admin', 'teacher'])) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        // Ownership check for Teacher
+        if ($user->role === 'teacher') {
+            $course = Course::where('course_code', $assignment->course)->first();
+            $isOwner = ($assignment->teacher_id == $user->id) || ($course && $course->teacher_id == $user->id);
+            if (!$isOwner && $assignment->teacher_id !== null) {
+                return response()->json([
+                    'message' => "Forbidden. You do not have permission to modify another teacher's assignment."
+                ], 403);
+            }
         }
 
         $validated = $request->validate([
@@ -95,12 +156,29 @@ class AssignmentController extends Controller
         return response()->json($assignment);
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
+        $user = $request->user();
         $assignment = Assignment::find($id);
         if (!$assignment) {
             return response()->json(['message' => 'Assignment not found'], 404);
         }
+
+        if (!in_array($user->role, ['admin', 'teacher'])) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        // Ownership check for Teacher
+        if ($user->role === 'teacher') {
+            $course = Course::where('course_code', $assignment->course)->first();
+            $isOwner = ($assignment->teacher_id == $user->id) || ($course && $course->teacher_id == $user->id);
+            if (!$isOwner && $assignment->teacher_id !== null) {
+                return response()->json([
+                    'message' => "Forbidden. You cannot delete another teacher's assignment."
+                ], 403);
+            }
+        }
+
         $assignment->delete();
         return response()->json(['message' => 'Assignment deleted successfully']);
     }

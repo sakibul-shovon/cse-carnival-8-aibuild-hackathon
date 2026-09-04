@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { GraduationCap, Lock, Mail, AlertCircle, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
+import { GraduationCap, Lock, Mail, AlertCircle, ArrowRight, ShieldCheck, UserCheck, BookOpen } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -128,29 +128,41 @@ export default function Login() {
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 text-center">
               Quick Demo Accounts
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => handleFillDemo('student@campusos.com', 'password')}
-                className="flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 transition text-left group"
+                className="flex flex-col items-center p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 transition text-center group cursor-pointer"
               >
                 <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center mb-1 group-hover:bg-indigo-600 group-hover:text-white transition">
                   <UserCheck className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-bold text-slate-800">Student Demo</span>
-                <span className="text-[10px] text-slate-500 truncate">student@campusos.com</span>
+                <span className="text-xs font-bold text-slate-800">Student</span>
+                <span className="text-[10px] text-slate-500 truncate w-full">student@...</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleFillDemo('teacher@campusos.com', 'password')}
+                className="flex flex-col items-center p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-amber-50 hover:border-amber-200 transition text-center group cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center mb-1 group-hover:bg-amber-600 group-hover:text-white transition">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-800">Teacher</span>
+                <span className="text-[10px] text-slate-500 truncate w-full">teacher@...</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleFillDemo('admin@campusos.com', 'password')}
-                className="flex flex-col items-center p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-200 transition text-left group"
+                className="flex flex-col items-center p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-200 transition text-center group cursor-pointer"
               >
                 <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center mb-1 group-hover:bg-emerald-600 group-hover:text-white transition">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-bold text-slate-800">Admin Demo</span>
-                <span className="text-[10px] text-slate-500 truncate">admin@campusos.com</span>
+                <span className="text-xs font-bold text-slate-800">Admin</span>
+                <span className="text-[10px] text-slate-500 truncate w-full">admin@...</span>
               </button>
             </div>
           </div>

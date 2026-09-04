@@ -19,7 +19,8 @@ import {
 const PRIORITIES = ['All', 'high', 'medium', 'low'];
 
 export default function Announcements() {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, isTeacher } = useAuth();
+  const canManage = isAdmin || isTeacher;
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -146,10 +147,10 @@ export default function Announcements() {
             Department updates, emergency notices, class reschedules, and official circulars.
           </p>
         </div>
-        {isAdmin && (
+        {canManage && (
           <button
             onClick={handleOpenCreateModal}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Post Notice
           </button>
@@ -190,31 +191,31 @@ export default function Announcements() {
         </div>
       </div>
 
-      {/* List of Announcements */}
+      {/* Grid of Announcements */}
       {loading ? (
-        <div className="space-y-4 animate-pulse">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-white rounded-2xl border border-slate-200"></div>
+            <div key={i} className="h-44 bg-white rounded-2xl border border-slate-200"></div>
           ))}
         </div>
       ) : announcements.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl bg-white border border-slate-200 shadow-xs">
-          <Megaphone className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-700">No announcements found</h3>
-          <p className="text-xs text-slate-500 mt-1">Try switching filters or add a new announcement.</p>
+        <div className="p-12 text-center bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+          <Megaphone className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-slate-800">No Announcements Found</h3>
+          <p className="text-xs text-slate-500 mt-1">Try searching for other terms or clear priority filter.</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {announcements.map((ann) => (
-            <div
+            <div 
               key={ann.id}
-              className="p-5 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 transition shadow-xs hover:shadow-md space-y-3 group"
+              className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs hover:shadow-md transition space-y-3 group"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <span className={`px-2.5 py-1 text-xs font-extrabold uppercase rounded-full border ${
-                    ann.priority === 'high'
-                      ? 'bg-rose-50 text-rose-700 border-rose-100'
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className={`px-2.5 py-1 text-xs font-extrabold rounded-full border ${
+                    ann.priority === 'high' 
+                      ? 'bg-rose-50 text-rose-700 border-rose-100' 
                       : ann.priority === 'medium'
                       ? 'bg-amber-50 text-amber-700 border-amber-100'
                       : 'bg-slate-100 text-slate-600 border-slate-200'
@@ -229,18 +230,18 @@ export default function Announcements() {
                   </span>
                 </div>
 
-                {isAdmin && (
+                {canManage && (
                   <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
                     <button
                       onClick={() => handleOpenEditModal(ann)}
-                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
+                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition cursor-pointer"
                       title="Edit notice"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(ann.id, ann.title)}
-                      className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
+                      className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition cursor-pointer"
                       title="Delete notice"
                     >
                       <Trash2 className="w-4 h-4" />

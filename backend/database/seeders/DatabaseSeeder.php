@@ -19,8 +19,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 0. Seed Demo Users (Student & Admin)
-        User::updateOrCreate(
+        // 0. Seed Demo Users (Student, Teacher, Admin)
+        $studentUser = User::updateOrCreate(
             ['email' => 'student@campusos.com'],
             [
                 'name' => 'Sakibul Hassan',
@@ -29,13 +29,131 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        User::updateOrCreate(
+        $studentMahi = User::updateOrCreate(
+            ['email' => 'mahi@campusos.com'],
+            [
+                'name' => 'Mahi Chowdhury',
+                'password' => Hash::make('password'),
+                'role' => 'student',
+            ]
+        );
+
+        $teacherUser = User::updateOrCreate(
+            ['email' => 'teacher@campusos.com'],
+            [
+                'name' => 'Dr. Tariq Rahman',
+                'password' => Hash::make('password'),
+                'role' => 'teacher',
+            ]
+        );
+
+        $teacherAhmed = User::updateOrCreate(
+            ['email' => 'prof.ahmed@campusos.com'],
+            [
+                'name' => 'Prof. Shakil Ahmed',
+                'password' => Hash::make('password'),
+                'role' => 'teacher',
+            ]
+        );
+
+        $adminUser = User::updateOrCreate(
             ['email' => 'admin@campusos.com'],
             [
                 'name' => 'CampusOS Administrator',
                 'password' => Hash::make('password'),
                 'role' => 'admin',
             ]
+        );
+
+        // 1. Seed Core Courses with Teacher Ownership
+        $coursesData = [
+            [
+                'id' => 'CRS-CSE321',
+                'course_code' => 'CSE 321',
+                'course_name' => 'Computer Networks',
+                'description' => 'Architecture, routing protocols, TCP/IP stack, socket programming, and wireless networks.',
+                'teacher_id' => $teacherUser->id,
+                'section' => 'A',
+                'capacity' => 40,
+                'status' => 'active',
+            ],
+            [
+                'id' => 'CRS-CSE331',
+                'course_code' => 'CSE 331',
+                'course_name' => 'Database Systems',
+                'description' => 'Relational modeling, SQL, ACID transactions, indexing, query optimization, and normalization.',
+                'teacher_id' => $teacherUser->id,
+                'section' => 'B',
+                'capacity' => 35,
+                'status' => 'active',
+            ],
+            [
+                'id' => 'CRS-CSE341',
+                'course_code' => 'CSE 341',
+                'course_name' => 'Artificial Intelligence',
+                'description' => 'Search algorithms, heuristics, knowledge representation, reinforcement learning, and neural networks.',
+                'teacher_id' => $teacherAhmed->id,
+                'section' => 'A',
+                'capacity' => 40,
+                'status' => 'active',
+            ],
+            [
+                'id' => 'CRS-CSE351',
+                'course_code' => 'CSE 351',
+                'course_name' => 'Software Engineering',
+                'description' => 'Agile processes, design patterns, microservices architecture, CI/CD pipelines, and software testing.',
+                'teacher_id' => $teacherAhmed->id,
+                'section' => 'C',
+                'capacity' => 30,
+                'status' => 'active',
+            ],
+            [
+                'id' => 'CRS-CSE4113',
+                'course_code' => 'CSE 4113',
+                'course_name' => 'Industrial Management',
+                'description' => 'Organizational leadership, financial engineering, operations research, and product strategy.',
+                'teacher_id' => $teacherUser->id,
+                'section' => 'B',
+                'capacity' => 45,
+                'status' => 'active',
+            ],
+            [
+                'id' => 'CRS-CSE4125',
+                'course_code' => 'CSE 4125',
+                'course_name' => 'Distributed Databases',
+                'description' => 'Distributed query execution, 2-phase commit, consensus algorithms (Raft/Paxos), and NoSQL scaling.',
+                'teacher_id' => $teacherAhmed->id,
+                'section' => 'A',
+                'capacity' => 40,
+                'status' => 'active',
+            ],
+        ];
+
+        foreach ($coursesData as $cData) {
+            \App\Models\Course::updateOrCreate(['id' => $cData['id']], $cData);
+        }
+
+        // 2. Seed Student Enrollments
+        \App\Models\CourseEnrollment::updateOrCreate(
+            ['student_id' => $studentUser->id, 'course_id' => 'CRS-CSE321'],
+            ['status' => 'enrolled', 'enrolled_at' => now()->subDays(5)]
+        );
+        \App\Models\CourseEnrollment::updateOrCreate(
+            ['student_id' => $studentUser->id, 'course_id' => 'CRS-CSE331'],
+            ['status' => 'enrolled', 'enrolled_at' => now()->subDays(4)]
+        );
+        \App\Models\CourseEnrollment::updateOrCreate(
+            ['student_id' => $studentUser->id, 'course_id' => 'CRS-CSE4113'],
+            ['status' => 'enrolled', 'enrolled_at' => now()->subDays(2)]
+        );
+
+        \App\Models\CourseEnrollment::updateOrCreate(
+            ['student_id' => $studentMahi->id, 'course_id' => 'CRS-CSE321'],
+            ['status' => 'enrolled', 'enrolled_at' => now()->subDays(3)]
+        );
+        \App\Models\CourseEnrollment::updateOrCreate(
+            ['student_id' => $studentMahi->id, 'course_id' => 'CRS-CSE341'],
+            ['status' => 'enrolled', 'enrolled_at' => now()->subDays(1)]
         );
 
         $dataPath = base_path('../data');

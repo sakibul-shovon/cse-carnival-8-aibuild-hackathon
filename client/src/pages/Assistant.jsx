@@ -52,7 +52,7 @@ export default function Assistant() {
     setLoading(true);
 
     try {
-      const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
+      const history = messages.slice(-12).map(m => ({ role: m.role, content: m.content }));
       const res = await agentService.chat(text, history);
 
       setMessages([

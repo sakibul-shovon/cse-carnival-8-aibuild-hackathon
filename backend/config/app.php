@@ -123,4 +123,20 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Centralized Campus / Simulated Demo Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Single source of truth for the CampusOS demo simulated date, time, and
+    | timezone used across all AI agent tools, schedule calculations, and UI.
+    |
+    */
+
+    'campus' => [
+        'simulated_date' => env('CAMPUS_SIMULATED_DATE', '2026-09-04'),
+        'simulated_time' => env('CAMPUS_SIMULATED_TIME', '18:24:00'),
+        'timezone' => env('CAMPUS_TIMEZONE', 'Asia/Dhaka'),
+    ],
+
 ];

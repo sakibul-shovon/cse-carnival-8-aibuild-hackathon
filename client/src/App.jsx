@@ -11,6 +11,7 @@ import Rooms from './pages/Rooms';
 import Events from './pages/Events';
 import Announcements from './pages/Announcements';
 import Assignments from './pages/Assignments';
+import Courses from './pages/Courses';
 import Assistant from './pages/Assistant';
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
             }
           >
             <Route index element={<Overview />} />
+            <Route path="courses" element={<Courses />} />
             <Route path="schedules" element={<Schedules />} />
             <Route path="rooms" element={<Rooms />} />
             <Route path="events" element={<Events />} />

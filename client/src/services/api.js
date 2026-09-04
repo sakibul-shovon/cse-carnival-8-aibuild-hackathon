@@ -59,6 +59,19 @@ export const assignmentService = {
   delete: (id) => api.delete(`/assignments/${id}`).then(res => res.data),
 };
 
+export const courseService = {
+  getAll: (params) => api.get('/courses', { params }).then(res => res.data),
+  getMyCourses: (params) => api.get('/courses/my-courses', { params }).then(res => res.data),
+  getById: (id) => api.get(`/courses/${id}`).then(res => res.data),
+  create: (data) => api.post('/courses', data).then(res => res.data),
+  update: (id, data) => api.put(`/courses/${id}`, data).then(res => res.data),
+  delete: (id) => api.delete(`/courses/${id}`).then(res => res.data),
+  enroll: (id) => api.post(`/courses/${id}/enroll`).then(res => res.data),
+  drop: (id) => api.delete(`/courses/${id}/enroll`).then(res => res.data),
+  getStudents: (id) => api.get(`/courses/${id}/students`).then(res => res.data),
+  getTeachers: () => api.get('/courses/teachers').then(res => res.data),
+};
+
 export const agentService = {
   chat: (message, history = []) => api.post('/agent/chat', { message, history }).then(res => res.data),
 };

@@ -19,7 +19,8 @@ import {
 const STATUS_FILTERS = ['All', 'pending', 'submitted', 'graded', 'late'];
 
 export default function Assignments() {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, isTeacher } = useAuth();
+  const canManage = isAdmin || isTeacher;
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -170,10 +171,10 @@ export default function Assignments() {
             Track homework, lab reports, term papers, and submission deadlines.
           </p>
         </div>
-        {isAdmin && (
+        {canManage && (
           <button
             onClick={handleOpenCreateModal}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition shadow-md shadow-indigo-600/20 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Add Assignment
           </button>
@@ -218,23 +219,25 @@ export default function Assignments() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-60 bg-white rounded-2xl border border-slate-200"></div>
+            <div key={i} className="h-64 bg-white rounded-2xl border border-slate-200"></div>
           ))}
         </div>
       ) : assignments.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl bg-white border border-slate-200 shadow-xs">
-          <BookOpenCheck className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-700">No assignments found</h3>
-          <p className="text-xs text-slate-500 mt-1">Try switching filters or add a new assignment.</p>
+        <div className="p-12 text-center bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+          <BookOpenCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-slate-800">No Assignments Found</h3>
+          <p className="text-xs text-slate-500 mt-1">Try changing the status filter or search keywords.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {assignments.map((asgn) => {
             const isDone = asgn.status === 'submitted' || asgn.status === 'graded';
+            const canEditThis = isAdmin || (isTeacher && (!asgn.teacher_id || asgn.teacher_id === user?.id));
+
             return (
               <div
                 key={asgn.id}
-                className="flex flex-col justify-between p-5 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 transition shadow-xs hover:shadow-md group"
+                className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between group"
               >
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-3">
@@ -255,18 +258,18 @@ export default function Assignments() {
                       </span>
                     </div>
 
-                    {isAdmin && (
+                    {canEditThis && (
                       <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
                         <button
                           onClick={() => handleOpenEditModal(asgn)}
-                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition cursor-pointer"
                           title="Edit assignment"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(asgn.id, asgn.title)}
-                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition"
+                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition cursor-pointer"
                           title="Delete assignment"
                         >
                           <Trash2 className="w-4 h-4" />

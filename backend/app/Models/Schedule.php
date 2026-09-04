@@ -20,4 +20,9 @@ class Schedule extends Model
         'instructor',
         'section',
     ];
+
+    public function courseRelation(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Course::class, 'course', 'course_code');
+    }
 }

@@ -49,6 +49,12 @@ class EventController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        if (!in_array($user->role, ['admin', 'teacher'])) {
+            return response()->json(['message' => 'Forbidden. Teacher or Admin access required.'], 403);
+        }
+
         $validated = $request->validate([
             'id' => 'nullable|string',
             'name' => 'required|string',
@@ -58,7 +64,7 @@ class EventController extends Controller
             'end_time' => 'required|string',
             'end_date' => 'nullable|string',
             'venue' => 'required|string',
-            'organizer' => 'required|string',
+            'organizer' => 'nullable|string',
             'capacity' => 'required|integer|min:1',
             'registered' => 'nullable|integer',
             'registrations' => 'nullable|array',
@@ -67,6 +73,9 @@ class EventController extends Controller
 
         if (empty($validated['id'])) {
             $validated['id'] = 'evt-' . Str::padLeft(Event::count() + 1, 3, '0');
+        }
+        if (empty($validated['organizer'])) {
+            $validated['organizer'] = $user->name . ($user->role === 'teacher' ? ' (Faculty)' : ' (Admin)');
         }
         if (empty($validated['end_date'])) {
             $validated['end_date'] = $validated['date'];
@@ -84,9 +93,20 @@ class EventController extends Controller
 
     public function update(Request $request, string $id): JsonResponse
     {
+        $user = $request->user();
         $event = Event::find($id);
         if (!$event) {
             return response()->json(['message' => 'Event not found'], 404);
+        }
+
+        if (!in_array($user->role, ['admin', 'teacher'])) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        if ($user->role === 'teacher' && !str_contains(strtolower($event->organizer), strtolower($user->name))) {
+            return response()->json([
+                'message' => 'Forbidden. You do not have permission to modify another organizer\'s event.'
+            ], 403);
         }
 
         $validated = $request->validate([
@@ -108,12 +128,24 @@ class EventController extends Controller
         return response()->json($event);
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
+        $user = $request->user();
         $event = Event::find($id);
         if (!$event) {
             return response()->json(['message' => 'Event not found'], 404);
         }
+
+        if (!in_array($user->role, ['admin', 'teacher'])) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        if ($user->role === 'teacher' && !str_contains(strtolower($event->organizer), strtolower($user->name))) {
+            return response()->json([
+                'message' => 'Forbidden. You cannot delete another organizer\'s event.'
+            ], 403);
+        }
+
         $event->delete();
         return response()->json(['message' => 'Event deleted successfully']);
     }

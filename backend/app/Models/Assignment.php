@@ -20,9 +20,20 @@ class Assignment extends Model
         'submission_platform',
         'status',
         'marks',
+        'teacher_id',
     ];
 
     protected $casts = [
         'marks' => 'integer',
     ];
+
+    public function courseRelation(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Course::class, 'course', 'course_code');
+    }
+
+    public function teacher(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'teacher_id');
+    }
 }
