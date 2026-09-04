@@ -72,3 +72,9 @@ Open the AI Assistant from the sidebar and ask questions like:
 - "I need a room for 5 people with a projector, tomorrow between 2 and 4."
 
 The agent reads live data from the database. Any change made in the dashboard is immediately available to the agent.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
