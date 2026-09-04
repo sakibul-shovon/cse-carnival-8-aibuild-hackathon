@@ -42,9 +42,9 @@ We have ~3 hours. Speed over cleanliness. Rules:
 - [ ] **[B-7]** Event capacity check (409 when full) — *Member 2* `[Unblocks: F-5, G-6]`
 
 ### Member 1 (Frontend) — build against mock, swap to real the moment B-3 lands
-- [ ] **[F-1]** Scaffold client, `api/client.js` against the mock shape from X-2 — *Member 1* `[Unblocks: F-2]`
-- [ ] **[F-2]** 5 list views rendering (mock, then real once **B-3** lands) — *Member 1* `[Unblocks: F-3]`
-- [ ] **[F-3]** Add/edit/delete forms wired for all 5 resources — *Member 1* `[Blocked by: B-4]` `[Unblocks: F-4]`
+- [x] ~~**[F-1]** Scaffold client, `api/client.js` against the mock shape from X-2 — *Member 1* `[Unblocks: F-2]`~~
+- [x] ~~**[F-2]** 5 list views rendering (mock, then real once **B-3** lands) — *Member 1* `[Unblocks: F-3]`~~
+- [x] ~~**[F-3]** Add/edit/delete forms wired for all 5 resources — *Member 1* `[Blocked by: B-4]` `[Unblocks: F-4]`~~
 
 ### Member 3 (AI Agent) — build against mock, swap to real the moment B-3 lands
 - [ ] **[G-1]** Scaffold agent, define read-tool schemas against mock shape from X-2 — *Member 3* `[Unblocks: G-2]`
@@ -61,9 +61,9 @@ We have ~3 hours. Speed over cleanliness. Rules:
 - [ ] **[B-9]** Room search filters (`min_capacity`, `equipment`, date/time free-check) — *Member 2* `[Unblocks: F-4, G-4]`
 
 ### Member 1
-- [ ] **[F-4]** Book/cancel-booking UI, surface the 409 conflict message — *Member 1* `[Blocked by: B-6, B-9]`
-- [ ] **[F-5]** Register/cancel-registration UI, disable button when full — *Member 1* `[Blocked by: B-7]`
-- [ ] **[F-6]** Chat widget shell: text box, message list, POST to `/api/agent/chat` — *Member 1* `[Unblocks: F-7]` (build this in parallel, doesn't need to wait on B-6/B-7)
+- [x] ~~**[F-4]** Book/cancel-booking UI, surface the 409 conflict message — *Member 1* `[Blocked by: B-6, B-9]`~~
+- [x] ~~**[F-5]** Register/cancel-registration UI, disable button when full — *Member 1* `[Blocked by: B-7]`~~
+- [x] ~~**[F-6]** Chat widget shell: text box, message list, POST to `/api/agent/chat` — *Member 1* `[Unblocks: F-7]`~~
 
 ### Member 3
 - [ ] **[G-5]** `book_room` tool tested against real conflict logic — 409 relayed in plain language — *Member 3* `[Blocked by: B-6]`
@@ -76,10 +76,10 @@ We have ~3 hours. Speed over cleanliness. Rules:
 
 ## ⏱️ 2:15–2:50 — Final 35 Minutes: Wire It Together, No New Features
 
-- [ ] **[F-7]** Chat renders clarifying questions and action-confirmation replies as normal messages — *Member 1* `[Blocked by: F-6, G-2]`
+- [x] ~~**[F-7]** Chat renders clarifying questions and action-confirmation replies as normal messages — *Member 1* `[Blocked by: F-6, G-2]`~~
 - [ ] **[X-3]** **Live-data smoke test:** one person edits a record in the dashboard, immediately asks the agent about it, confirms the answer updated — *All* `[Blocked by: F-3, G-2]` **← do this now, not at the end, so there's time left to fix it if it fails**
 - [ ] **[X-4]** Each member runs their 2–3 assigned `sample_queries.md` lines once, live, exactly as the judges will — *All*
-- [ ] **[X-5]** Kill any obviously broken console errors / blank screens on the main flows only — *Member 1*
+- [x] ~~**[X-5]** Kill any obviously broken console errors / blank screens on the main flows only — *Member 1*~~
 
 ---
 
